@@ -1,0 +1,22 @@
+{
+  "name": "냥트리스 (Nang_Tris)",
+  "short_name": "냥트리스",
+  "description": "귀여운 고양이 테트리스 게임",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e1e30",
+  "theme_color": "#ff8ab4",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
