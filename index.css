@@ -2000,13 +2000,134 @@ body {
 /* 데스크톱 세로 스크롤 방지 및 컴팩트 레이아웃 */
 @media (min-width: 1025px) {
     body {
-        overflow-y: hidden !important;
+        overflow: hidden !important;
+        height: 100vh !important;
     }
     #app {
+        height: 100vh !important;
+        padding: 10px 20px !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    /* 로그인 화면 스크롤 방지 */
+    #auth-section {
+        height: 100% !important;
+        overflow: hidden !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    /* 로비 화면 높이 고정 및 리스트 유연 스크롤 */
+    #lobby-section {
+        height: 100% !important;
+        min-height: 0 !important;
+        max-height: calc(100vh - 20px) !important;
+        overflow: hidden !important;
+        gap: 10px !important;
+    }
+    .lobby-header {
+        margin-top: 0 !important;
         padding: 8px 20px !important;
     }
-    .game-content {
+    .lobby-content {
+        height: 0 !important;
+        flex-grow: 1 !important;
+        overflow: hidden !important;
+        gap: 12px !important;
+        grid-template-columns: 1fr 320px !important;
+    }
+    .lobby-main, .lobby-sidebar {
+        height: 100% !important;
+        overflow: hidden !important;
+        gap: 12px !important;
+    }
+    .quick-play-grid {
+        gap: 12px !important;
+    }
+    .play-card {
+        padding: 16px !important;
         gap: 6px !important;
+    }
+    .card-icon {
+        font-size: 2.2rem !important;
+    }
+    .play-card h3 {
+        font-size: 1.1rem !important;
+    }
+    .play-card p {
+        font-size: 0.8rem !important;
+        margin-bottom: 4px !important;
+    }
+    .rooms-container {
+        padding: 12px !important;
+        flex-grow: 1 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+    .container-header {
+        margin-bottom: 8px !important;
+    }
+    .rooms-list-wrapper {
+        flex-grow: 1 !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+    }
+    .rooms-table th, .rooms-table td {
+        padding: 10px 12px !important;
+        font-size: 0.85rem !important;
+    }
+    .my-record-card {
+        padding: 12px !important;
+    }
+    .ranking-board {
+        padding: 12px !important;
+        flex-grow: 1 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+    .ranking-header {
+        margin-bottom: 8px !important;
+    }
+    .ranking-list {
+        flex-grow: 1 !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        gap: 6px !important;
+    }
+    .rank-row {
+        padding: 6px 10px !important;
+    }
+
+    /* 게임 플레이 화면 높이 및 여백 고정 */
+    #game-section {
+        height: 100% !important;
+        max-height: calc(100vh - 20px) !important;
+        overflow: hidden !important;
+        gap: 6px !important;
+    }
+    .game-content {
+        height: 0 !important;
+        flex-grow: 1 !important;
+        overflow: hidden !important;
+        gap: 6px !important;
+    }
+    #game-battle-layout {
+        height: 0 !important;
+        flex-grow: 1 !important;
+        overflow: hidden !important;
+    }
+    .player-panel {
+        height: 100% !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
     }
     .battle-chat-wrapper {
         margin: 4px auto !important;

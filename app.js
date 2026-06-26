@@ -3000,7 +3000,7 @@ function appendChatMessage(sender, text, isSelf, isSystem = false) {
     if (!isSystem) {
         const nameSpan = document.createElement('span');
         nameSpan.className = 'chat-sender';
-        nameSpan.textContent = isSelf ? '나: ' : `${sender}: `;
+        nameSpan.textContent = `${sender}: `;
         msgDiv.appendChild(nameSpan);
     }
     
