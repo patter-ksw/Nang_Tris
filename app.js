@@ -1995,6 +1995,7 @@ function playStageClearFanfare() {
         });
     } catch (e) {
         console.error("Fanfare audio error:", e);
+    }
 }
 
 // 게임오버 시 실망한 효과음 합성 (G3 -> F3 -> Eb3 -> C3 하향 진행 및 피치 슬라이드)
