@@ -1920,4 +1920,79 @@ body {
     }
 }
 
+/* 멀티플레이 간단 채팅창 스타일 */
+.battle-chat-wrapper {
+    max-width: 580px;
+    margin: 12px auto;
+    padding: 10px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.battle-chat-log {
+    height: 90px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+    color: #e2e8f0;
+}
+
+.battle-chat-log::-webkit-scrollbar {
+    width: 6px;
+}
+.battle-chat-log::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.chat-msg {
+    line-height: 1.4;
+    word-break: break-all;
+}
+
+.chat-msg.self .chat-sender {
+    color: #38bdf8; /* 내 메세지 파란색 */
+    font-weight: bold;
+}
+
+.chat-msg.opp .chat-sender {
+    color: #ffd166; /* 상대방 메세지 금색 */
+    font-weight: bold;
+}
+
+.chat-system {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+#battle-chat-form {
+    display: flex;
+    gap: 8px;
+}
+
+#battle-chat-input {
+    flex-grow: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #fff;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#battle-chat-input:focus {
+    border-color: var(--color-primary);
+}
+
 

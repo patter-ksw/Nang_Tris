@@ -1748,6 +1748,11 @@ function rotatePiece(activePiece, dir) {
 
 // --- 9. 사용자 조작 인풋 핸들러 ---
 function handleKeyDown(e) {
+    // 채팅 입력 창이 포커스된 경우 키보드 게임 조작 방지
+    if (document.activeElement && document.activeElement.id === 'battle-chat-input') {
+        return;
+    }
+    
     if (!isGameRunning || isGamePaused) return;
 
     // 게임 조작 키 입력 시 브라우저 스크롤 등의 기본 동작을 방지합니다.
@@ -2049,9 +2054,9 @@ async function handleGameOver() {
         // 멀티 최고 스코어 랭킹업 로드
         await uploadHighScore('multi', gameStateSelf.score);
         
-        // 방장(호스트)인 경우 게임 종료 시 대기방 DB 삭제 (로비 리스트에서 즉시 제거)
+        // 방장(호스트)인 경우 게임 종료 시 대기방 DB 상태를 waiting으로 변경 (로비에서 대기중으로 리매치 가능하게)
         if (isHost && supabaseClient && activeRoomId) {
-            supabaseClient.from('tr_rooms').delete().eq('id', activeRoomId).then();
+            supabaseClient.from('tr_rooms').update({ status: 'waiting' }).eq('id', activeRoomId).then();
         }
     } else {
         title.textContent = "GAME OVER";
@@ -2078,11 +2083,17 @@ async function handleGameOver() {
 
     // overlay-btn-restart 복원
     const restartBtn = document.getElementById('overlay-btn-restart');
-    restartBtn.innerHTML = `<i data-lucide="rotate-ccw"></i> 다시 시작`;
-    restartBtn.onclick = restartCurrentGame;
     if (isMultiplayMode) {
-        restartBtn.classList.add('hidden'); // 멀티플레이 대기방은 삭제되었으므로 다시시작 숨김
+        if (isHost) {
+            restartBtn.innerHTML = `<i data-lucide="rotate-ccw"></i> 다시 시작`;
+            restartBtn.onclick = restartCurrentGame;
+            restartBtn.classList.remove('hidden');
+        } else {
+            restartBtn.classList.add('hidden'); // 게스트는 방장의 시작 대기
+        }
     } else {
+        restartBtn.innerHTML = `<i data-lucide="rotate-ccw"></i> 다시 시작`;
+        restartBtn.onclick = restartCurrentGame;
         restartBtn.classList.remove('hidden');
     }
     lucide.createIcons();
@@ -2378,6 +2389,16 @@ function enterGameRoom(room) {
         const mobileAttackBtn = document.getElementById('btn-mobile-attack');
         if (mobileAttackBtn) mobileAttackBtn.classList.remove('hidden');
         
+        // 멀티플레이 채팅창 표시 및 초기화
+        const chatContainer = document.getElementById('battle-chat-container');
+        if (chatContainer) {
+            chatContainer.classList.remove('hidden');
+            const chatLog = document.getElementById('battle-chat-messages');
+            if (chatLog) {
+                chatLog.innerHTML = '<div class="chat-system">채팅방에 연결되었습니다. 매너 채팅 부탁드린다옹! 🐾</div>';
+            }
+        }
+        
         if (room.opponent_id) {
             document.getElementById('player-opp-name').textContent = isHost ? room.opponent_nickname : room.creator_nickname;
         } else {
@@ -2402,6 +2423,12 @@ function enterGameRoom(room) {
         // 모바일 가상 패드에 어택 버튼 숨김
         const mobileAttackBtn = document.getElementById('btn-mobile-attack');
         if (mobileAttackBtn) mobileAttackBtn.classList.add('hidden');
+        
+        // 멀티플레이 채팅창 숨김
+        const chatContainer = document.getElementById('battle-chat-container');
+        if (chatContainer) {
+            chatContainer.classList.add('hidden');
+        }
         
         // 싱글 게임 즉시 개시
         initSingleGameStart();
@@ -2479,6 +2506,9 @@ function subscribeGameChannel(roomId) {
         })
         .on('broadcast', { event: 'game-start-signal' }, () => {
             runGameStartCountdown();
+        })
+        .on('broadcast', { event: 'chat-message' }, ({ payload }) => {
+            appendChatMessage(payload.sender, payload.text, false);
         })
         .on('broadcast', { event: 'player-left' }, () => {
             // 게스트 유저가 방을 나감
@@ -2579,15 +2609,22 @@ function handleOpponentLoss() {
     showBoardResult('self', true);
     showBoardResult('opp', false);
     
-    // 방장(호스트)인 경우 게임 종료 시 대기방 DB 삭제 (로비 리스트에서 즉시 제거)
+    // 방장(호스트)인 경우 게임 종료 시 대기방 DB 상태를 waiting으로 변경 (로비에서 대기중으로 리매치 가능하게)
     if (isHost && supabaseClient && activeRoomId) {
-        supabaseClient.from('tr_rooms').delete().eq('id', activeRoomId).then();
+        supabaseClient.from('tr_rooms').update({ status: 'waiting' }).eq('id', activeRoomId).then();
     }
     
-    // 다시 시작 버튼 숨김 (멀티플레이 종료 시 로비 이동 유도)
+    // 다시 시작 버튼 노출 제어 (방장에게만 노출)
     const restartBtn = document.getElementById('overlay-btn-restart');
     if (restartBtn) {
-        restartBtn.classList.add('hidden');
+        if (isHost) {
+            restartBtn.innerHTML = `<i data-lucide="rotate-ccw"></i> 다시 시작`;
+            restartBtn.onclick = restartCurrentGame;
+            restartBtn.classList.remove('hidden');
+        } else {
+            restartBtn.classList.add('hidden'); // 게스트는 대기함
+        }
+        lucide.createIcons();
     }
     
     document.getElementById('game-overlay').classList.remove('hidden');
@@ -2735,6 +2772,7 @@ function runGameStartCountdown(isNextStage = false) {
     if (countdownIntervalId) {
         clearInterval(countdownIntervalId);
     }
+    document.getElementById('game-overlay').classList.add('hidden'); // 카운트다운 시작 시 승패 오버레이 숨김
     document.getElementById('multiplay-controls').classList.add('hidden');
     const cd = document.getElementById('game-start-countdown');
     cd.classList.remove('hidden');
@@ -2846,6 +2884,13 @@ async function exitToLobby() {
     document.getElementById('game-start-countdown').classList.add('hidden');
     
     document.getElementById('game-overlay').classList.add('hidden');
+    
+    // 멀티플레이 채팅창 숨김
+    const chatContainer = document.getElementById('battle-chat-container');
+    if (chatContainer) {
+        chatContainer.classList.add('hidden');
+    }
+    
     showSection('lobby-section');
 
     // 멀티룸 퇴장 처리
@@ -2895,4 +2940,52 @@ function escapeHtml(str) {
               .replace(/>/g, "&gt;")
               .replace(/"/g, "&quot;")
               .replace(/'/g, "&#039;");
+}
+
+// --- 14. 멀티플레이어 배틀 실시간 채팅 함수 ---
+function sendBattleChatMessage(e) {
+    if (e) e.preventDefault();
+    if (!gameRealtimeChannel) return;
+    
+    const input = document.getElementById('battle-chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    // 내 메시지를 화면에 출력
+    appendChatMessage(currentUser.nickname || currentUser.username, text, true);
+    
+    // 상대에게 브로드캐스트 전송
+    gameRealtimeChannel.send({
+        type: 'broadcast',
+        event: 'chat-message',
+        payload: {
+            sender: currentUser.nickname || currentUser.username,
+            text: text
+        }
+    });
+    
+    input.value = '';
+}
+
+function appendChatMessage(sender, text, isSelf) {
+    const log = document.getElementById('battle-chat-messages');
+    if (!log) return;
+    
+    const msgDiv = document.createElement('div');
+    msgDiv.className = isSelf ? 'chat-msg self' : 'chat-msg opp';
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'chat-sender';
+    nameSpan.textContent = isSelf ? '나: ' : `${sender}: `;
+    
+    const textSpan = document.createElement('span');
+    textSpan.className = 'chat-text';
+    textSpan.textContent = text;
+    
+    msgDiv.appendChild(nameSpan);
+    msgDiv.appendChild(textSpan);
+    log.appendChild(msgDiv);
+    
+    // 항상 최하단 스크롤
+    log.scrollTop = log.scrollHeight;
 }

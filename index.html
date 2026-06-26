@@ -362,6 +362,15 @@
                     </div>
                 </div>
 
+                <!-- 멀티플레이 전용 간단 채팅창 -->
+                <div id="battle-chat-container" class="battle-chat-wrapper glassmorphism hidden">
+                    <div id="battle-chat-messages" class="battle-chat-log"></div>
+                    <form id="battle-chat-form" onsubmit="sendBattleChatMessage(event)">
+                        <input type="text" id="battle-chat-input" placeholder="상대방에게 대화하기... (Enter)" maxlength="50" autocomplete="off">
+                        <button type="submit" class="btn btn-primary btn-sm">전송</button>
+                    </form>
+                </div>
+
                 <!-- 키 조작 가이드 -->
                 <div class="controls-guide-bar glassmorphism">
                     <span><strong>이동:</strong> ← →</span>
