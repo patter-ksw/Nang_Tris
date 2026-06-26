@@ -1529,7 +1529,6 @@ function enterGameRoom(room) {
     
     // UI 레이아웃 설정
     document.getElementById('game-room-title').textContent = room.title;
-    document.getElementById('game-mode-badge').textContent = room.opponent_id ? 'BATTLE' : 'SINGLE';
     
     // 초기화
     resetLocalGameState();
@@ -1537,22 +1536,31 @@ function enterGameRoom(room) {
     // 상대방 화면 초기화
     clearOpponentPanel();
 
-    if (room.opponent_id) {
-        // 1:1 멀티플레이 모드 돌입
+    if (room.id) {
+        // 1:1 멀티플레이 모드 돌입 (방장 대기 또는 참가 즉시)
         isMultiplayMode = true;
+        document.getElementById('game-mode-badge').textContent = 'BATTLE';
         document.getElementById('player-panel-opponent').classList.remove('hidden');
         document.getElementById('multiplay-controls').classList.remove('hidden');
         
-        document.getElementById('player-opp-name').textContent = isHost ? room.opponent_nickname : room.creator_nickname;
+        if (room.opponent_id) {
+            document.getElementById('player-opp-name').textContent = isHost ? room.opponent_nickname : room.creator_nickname;
+        } else {
+            document.getElementById('player-opp-name').textContent = '상대 대기중...';
+        }
         
-        // 준비 상태 메세지
+        // 준비 상태 메세지 및 채널 연결
         updateMultiplayStatus();
-
-        // 1:1 배틀 통신 채널 연결
         subscribeGameChannel(room.id);
+        
+        if (isHost) {
+            // 방장인 경우 상대가 들어와 동기화 신호를 주기 전까지 대기
+            document.getElementById('btn-start-game').disabled = !room.opponent_id;
+        }
     } else {
         // 싱글플레이 모드 돌입
         isMultiplayMode = false;
+        document.getElementById('game-mode-badge').textContent = 'SINGLE';
         document.getElementById('player-panel-opponent').classList.add('hidden');
         document.getElementById('multiplay-controls').classList.add('hidden');
         
@@ -1630,6 +1638,20 @@ function subscribeGameChannel(roomId) {
         .on('broadcast', { event: 'game-start-signal' }, () => {
             runGameStartCountdown();
         })
+        .on('broadcast', { event: 'player-left' }, () => {
+            // 게스트 유저가 방을 나감
+            clearOpponentPanel();
+            document.getElementById('player-opp-name').textContent = '상대 대기중...';
+            if (isHost) {
+                document.getElementById('btn-start-game').disabled = true;
+                document.getElementById('multiplay-status-text').textContent = '상대방이 방을 나갔습니다. 대기 중...';
+            }
+        })
+        .on('broadcast', { event: 'host-left' }, () => {
+            // 호스트 유저(방장)가 방을 나감
+            alert('방장이 방을 폭파하고 나갔습니다. 로비로 이동합니다.');
+            exitToLobby();
+        })
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 console.log("Game Realtime Channel connected!");
@@ -1643,9 +1665,15 @@ function subscribeGameChannel(roomId) {
 
 // 상대방 화면 동기화 패킷 처리
 function handleOpponentSync(payload) {
+    if (payload.nickname) {
+        document.getElementById('player-opp-name').textContent = payload.nickname;
+    }
     if (!isGameRunning && payload.isReadySync && isHost) {
         // 호스트에서 2P 연결 수립됨을 감지
         document.getElementById('btn-start-game').disabled = false;
+        if (payload.nickname) {
+            document.getElementById('multiplay-status-text').textContent = `${payload.nickname}님이 입장하셨습니다! 게임을 시작해주세요.`;
+        }
     }
     
     gameStateOpp.grid = payload.grid;
@@ -1725,6 +1753,7 @@ function syncGameStateToOpponent() {
     if (!gameRealtimeChannel) return;
     
     const packet = {
+        nickname: currentUser ? currentUser.nickname : '집사',
         grid: gameStateSelf.grid,
         score: gameStateSelf.score,
         lines: gameStateSelf.lines,
@@ -1853,6 +1882,15 @@ async function exitToLobby() {
     // 멀티룸 퇴장 처리
     if (activeRoomId && supabaseClient) {
         try {
+            // 상대방에게 퇴장 노티 전송
+            if (gameRealtimeChannel) {
+                gameRealtimeChannel.send({
+                    type: 'broadcast',
+                    event: isHost ? 'host-left' : 'player-left',
+                    payload: {}
+                });
+            }
+
             if (isHost) {
                 // 방장이면 방 파괴
                 await supabaseClient.from('tr_rooms').delete().eq('id', activeRoomId);
