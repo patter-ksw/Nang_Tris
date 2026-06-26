@@ -1452,7 +1452,7 @@ body {
     display: none !important;
 }
 
-@media (max-width: 900px), (pointer: coarse) {
+@media screen and (max-width: 1024px) {
     /* 1. 기본 앱 컨테이너 패딩 및 가로 스크롤 완전 차단 */
     #app {
         padding: 8px !important;
@@ -1522,24 +1522,29 @@ body {
     }
     .lobby-logo {
         gap: 6px !important;
+        white-space: nowrap !important;
     }
     .lobby-logo .logo-emoji {
         font-size: 1.8rem !important;
     }
     .lobby-logo .logo-title {
         font-size: 1.3rem !important;
+        white-space: nowrap !important;
     }
     .user-profile {
         width: 100% !important;
         justify-content: center !important;
         gap: 10px !important;
+        flex-wrap: nowrap !important;
     }
     .user-info {
         font-size: 0.82rem !important;
+        white-space: nowrap !important;
     }
     .user-profile .btn {
         padding: 6px 10px !important;
         font-size: 0.78rem !important;
+        white-space: nowrap !important;
     }
 
     /* 로비 컨텐츠 모바일 세로 배치 */
