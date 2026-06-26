@@ -371,6 +371,28 @@
                     <span><strong>홀드:</strong> C 또는 Shift</span>
                     <span><strong>일시정지:</strong> P (싱글용)</span>
                 </div>
+
+                <!-- 모바일 전용 가상 조작 패드 -->
+                <div id="mobile-controller" class="mobile-only-flex mobile-controls-container">
+                    <div class="hold-row">
+                        <button type="button" class="ctrl-btn btn-hold" onclick="handleMobileAction('hold')">HOLD</button>
+                        <button type="button" class="ctrl-btn btn-pause" onclick="handleMobileAction('pause')">PAUSE</button>
+                    </div>
+                    <div class="control-main-layout">
+                        <!-- D-pad (Left, Down, Right) -->
+                        <div class="dpad-container">
+                            <button type="button" class="ctrl-btn btn-left" onclick="handleMobileAction('left')">◀</button>
+                            <button type="button" class="ctrl-btn btn-down" onclick="handleMobileAction('down')">▼</button>
+                            <button type="button" class="ctrl-btn btn-right" onclick="handleMobileAction('right')">▶</button>
+                        </div>
+                        <!-- Action buttons (Rotate Left, Rotate Right, Hard Drop) -->
+                        <div class="actions-container">
+                            <button type="button" class="ctrl-btn btn-rot-left" onclick="handleMobileAction('rot-left')">↺</button>
+                            <button type="button" class="ctrl-btn btn-rot-right" onclick="handleMobileAction('rot-right')">↻</button>
+                            <button type="button" class="ctrl-btn btn-hard-drop" onclick="handleMobileAction('hard-drop')">DROP</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 

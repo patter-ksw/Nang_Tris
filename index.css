@@ -1456,3 +1456,114 @@ body {
     color: #f87171; /* Soft Red */
     text-shadow: 0 0 15px rgba(248, 113, 113, 0.4);
 }
+
+/* --- 모바일 터치 패드 컨트롤러 디자인 --- */
+
+.mobile-only-flex {
+    display: none !important;
+}
+
+@media (max-width: 900px) {
+    .mobile-only-flex {
+        display: flex !important;
+    }
+    
+    .controls-guide-bar {
+        display: none !important;
+    }
+}
+
+.mobile-controls-container {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+    margin: 15px auto 0 auto;
+    padding: 12px;
+    border-radius: var(--border-radius-lg);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+}
+
+.hold-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.hold-row .ctrl-btn {
+    flex: 1;
+    height: 42px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 12px;
+    letter-spacing: 1px;
+}
+
+.control-main-layout {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.dpad-container {
+    display: flex;
+    gap: 10px;
+}
+
+.actions-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ctrl-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-color);
+    font-family: 'Fredoka', 'Noto Sans KR', sans-serif;
+    font-size: 1.3rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.08s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dpad-container .ctrl-btn,
+.actions-container .ctrl-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.actions-container .btn-hard-drop {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 활성 피드백 */
+.ctrl-btn:active {
+    background: var(--color-primary);
+    color: white;
+    transform: scale(0.9);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
+}
+
+.actions-container .btn-hard-drop:active {
+    background: #ff5487;
+    transform: scale(0.9);
+}
+

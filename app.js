@@ -137,6 +137,8 @@ let isMultiplayMode = false;
 let dropCounter = 0;
 let dropInterval = 1000; // ms
 let lastTime = 0;
+let gameLoopId = null;
+let countdownIntervalId = null;
 
 // 내 게임 상태
 const gameStateSelf = {
@@ -1640,6 +1642,43 @@ function handleKeyDown(e) {
     }
 }
 
+// 모바일 가상 패드 터치 액션 처리
+function handleMobileAction(action) {
+    if (!isGameRunning) return;
+    if (isGamePaused && action !== 'pause') return;
+
+    switch(action) {
+        case 'left':
+            moveActivePiece(-1);
+            break;
+        case 'right':
+            moveActivePiece(1);
+            break;
+        case 'down':
+            moveActivePieceDown();
+            break;
+        case 'rot-left':
+            rotatePiece(gameStateSelf.currentPiece, -1);
+            syncGameStateToOpponent();
+            break;
+        case 'rot-right':
+            rotatePiece(gameStateSelf.currentPiece, 1);
+            syncGameStateToOpponent();
+            break;
+        case 'hard-drop':
+            hardDropActivePiece();
+            break;
+        case 'hold':
+            holdActivePiece();
+            break;
+        case 'pause':
+            if (!isMultiplayMode) {
+                toggleGamePause();
+            }
+            break;
+    }
+}
+
 // 미노 좌우 이동
 function moveActivePiece(dir) {
     const piece = gameStateSelf.currentPiece;
@@ -1935,16 +1974,11 @@ function startNextStage() {
     currentBgmStep = 0;
     
     // 스테이지별 고정 속도 적용 (스테이지가 높을수록 빨라짐)
-    // Stage 1: 1000ms, Stage 2: 800ms, Stage 3: 650ms, Stage 4: 500ms, Stage 5: 380ms, Stage 6: 280ms, Stage 7: 200ms, Stage 8+: 100ms
     const speedTable = [1000, 1000, 800, 650, 500, 380, 280, 200, 120, 90];
     dropInterval = speedTable[gameStateSelf.stage] || 80;
     
-    // 게임 재개
-    isGameRunning = true;
-    startBGM();
-    
-    lastTime = performance.now();
-    requestAnimationFrame(gameLoop);
+    // 카운트다운을 표시하고 재개
+    runGameStartCountdown(true);
 }
 
 // 보드 바닥 줄 청소 보상
@@ -2066,9 +2100,12 @@ function toggleGamePause() {
 
 // --- 10. 메인 루프 (RequestAnimationFrame) ---
 function gameLoop(time = 0) {
-    if (!isGameRunning) return;
+    if (!isGameRunning) {
+        gameLoopId = null;
+        return;
+    }
     if (isGamePaused) {
-        requestAnimationFrame(gameLoop);
+        gameLoopId = requestAnimationFrame(gameLoop);
         return;
     }
 
@@ -2083,7 +2120,7 @@ function gameLoop(time = 0) {
     // 내 보드 그리기
     drawGrid(ctxGridSelf, gameStateSelf.grid, gameStateSelf.currentPiece);
     
-    requestAnimationFrame(gameLoop);
+    gameLoopId = requestAnimationFrame(gameLoop);
 }
 
 // --- 11. 실시간 멀티플레이어 네트워크 엔진 (Supabase Realtime) ---
@@ -2429,7 +2466,10 @@ function requestStartGame() {
 }
 
 // 카운트다운 가동
-function runGameStartCountdown() {
+function runGameStartCountdown(isNextStage = false) {
+    if (countdownIntervalId) {
+        clearInterval(countdownIntervalId);
+    }
     document.getElementById('multiplay-controls').classList.add('hidden');
     const cd = document.getElementById('game-start-countdown');
     cd.classList.remove('hidden');
@@ -2437,16 +2477,21 @@ function runGameStartCountdown() {
     let count = 3;
     cd.textContent = count;
     
-    const interval = setInterval(() => {
+    countdownIntervalId = setInterval(() => {
         count--;
         if (count > 0) {
             cd.textContent = count;
         } else {
-            clearInterval(interval);
+            clearInterval(countdownIntervalId);
+            countdownIntervalId = null;
             cd.classList.add('hidden');
             
-            // 실 게임 시동!
-            startGameExecution();
+            if (isNextStage) {
+                resumeGameAfterStageClear();
+            } else {
+                // 실 게임 시동!
+                startGameExecution();
+            }
         }
     }, 1000);
 }
@@ -2471,7 +2516,29 @@ function startGameExecution() {
     isGameRunning = true;
     startBGM();
     
-    requestAnimationFrame(gameLoop);
+    if (gameLoopId) {
+        cancelAnimationFrame(gameLoopId);
+    }
+    dropCounter = 0;
+    lastTime = performance.now();
+    gameLoopId = requestAnimationFrame(gameLoop);
+}
+
+function resumeGameAfterStageClear() {
+    if (!gameStateSelf.currentPiece) {
+        gameStateSelf.currentPiece = getRandomPiece();
+    }
+    drawNextQueue();
+    
+    isGameRunning = true;
+    startBGM();
+    
+    if (gameLoopId) {
+        cancelAnimationFrame(gameLoopId);
+    }
+    dropCounter = 0;
+    lastTime = performance.now();
+    gameLoopId = requestAnimationFrame(gameLoop);
 }
 
 function restartCurrentGame() {
@@ -2502,6 +2569,16 @@ function restartCurrentGame() {
 async function exitToLobby() {
     isGameRunning = false;
     stopBGM();
+    
+    if (gameLoopId) {
+        cancelAnimationFrame(gameLoopId);
+        gameLoopId = null;
+    }
+    if (countdownIntervalId) {
+        clearInterval(countdownIntervalId);
+        countdownIntervalId = null;
+    }
+    document.getElementById('game-start-countdown').classList.add('hidden');
     
     document.getElementById('game-overlay').classList.add('hidden');
     showSection('lobby-section');
