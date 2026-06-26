@@ -838,6 +838,7 @@ body {
     flex-direction: column;
     gap: 12px;
     width: 84px;
+    flex-shrink: 0;
 }
 
 .panel-box {
@@ -898,6 +899,7 @@ body {
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
     background: #141124; /* 바둑판 테두리 깔끔하게 */
     border: 2px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
 }
 
 .canvas-wrapper canvas {
@@ -1463,7 +1465,7 @@ body {
     display: none !important;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 900px), (pointer: coarse) {
     .mobile-only-flex {
         display: flex !important;
     }
@@ -1565,5 +1567,178 @@ body {
 .actions-container .btn-hard-drop:active {
     background: #ff5487;
     transform: scale(0.9);
+}
+
+/* --- 모바일 및 태블릿 화면을 위한 레이아웃 재배치 (HOLD/NEXT 상단 배치) --- */
+@media (max-width: 600px), (pointer: coarse) {
+    /* 1. 패널 배치: hold/next를 상단에 가로로, 메인 보드를 하단에 배치 */
+    .board-container {
+        display: grid !important;
+        grid-template-areas: 
+            "left right"
+            "main main" !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+        max-width: 320px !important;
+        margin: 0 auto !important;
+        justify-content: center !important;
+        align-items: start !important;
+    }
+    
+    /* 2. 좌측 영역 (HOLD + STATS) 재구성 */
+    .side-panel.left-side {
+        grid-area: left !important;
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        align-items: center !important;
+        justify-content: space-around !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 6px !important;
+        border-radius: var(--border-radius-md) !important;
+        gap: 6px !important;
+        height: auto !important;
+    }
+    
+    .side-panel.left-side .hold-box {
+        padding: 4px !important;
+        background: rgba(0, 0, 0, 0.3) !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
+        width: 58px !important;
+        height: 58px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .side-panel.left-side .hold-box .box-title {
+        font-size: 0.55rem !important;
+        margin-bottom: 2px !important;
+    }
+    
+    .side-panel.left-side .hold-box canvas,
+    .side-panel.right-side .next-box canvas {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
+    
+    .game-stats-box {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+        margin: 0 !important;
+    }
+    
+    .stat-item {
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 75px !important;
+    }
+    
+    .stat-label {
+        font-size: 0.55rem !important;
+        margin: 0 !important;
+    }
+    
+    .stat-value {
+        font-size: 0.8rem !important;
+        margin: 0 !important;
+    }
+
+    /* 3. 우측 영역 (NEXT + ATTACK) 재구성 */
+    .side-panel.right-side {
+        grid-area: right !important;
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        align-items: center !important;
+        justify-content: space-around !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 6px !important;
+        border-radius: var(--border-radius-md) !important;
+        gap: 6px !important;
+        height: auto !important;
+    }
+    
+    .side-panel.right-side .next-box {
+        padding: 4px !important;
+        background: rgba(0, 0, 0, 0.3) !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
+        width: 58px !important;
+        height: 58px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+    }
+    
+    .side-panel.right-side .next-box .box-title {
+        font-size: 0.55rem !important;
+        margin-bottom: 2px !important;
+    }
+    
+    .garbage-gauge-container {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
+        height: auto !important;
+        margin: 0 !important;
+    }
+    
+    .gauge-title {
+        font-size: 0.55rem !important;
+        margin: 0 !important;
+    }
+    
+    .gauge-bar-wrapper {
+        height: 48px !important;
+        width: 10px !important;
+        margin: 0 !important;
+    }
+
+    /* 4. 메인 캔버스 영역 (수축 및 잘림 방지) */
+    .canvas-wrapper {
+        grid-area: main !important;
+        width: 250px !important;
+        height: 500px !important;
+        flex-shrink: 0 !important;
+        margin: 0 auto !important;
+    }
+    
+    .canvas-wrapper canvas {
+        width: 250px !important;
+        height: 500px !important;
+        display: block !important;
+    }
+}
+
+/* 초소형 모바일 디바이스 (가로폭 360px 이하) 미세 축소 */
+@media (max-width: 360px) {
+    .canvas-wrapper {
+        width: 220px !important;
+        height: 440px !important;
+    }
+    
+    .canvas-wrapper canvas {
+        width: 220px !important;
+        height: 440px !important;
+    }
+    
+    .board-container {
+        max-width: 270px !important;
+    }
 }
 
