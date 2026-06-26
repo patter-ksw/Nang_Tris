@@ -41,9 +41,15 @@ ALTER TABLE tr_rankings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE tr_rooms DISABLE ROW LEVEL SECURITY;
 
 -- 5. Supabase Realtime 복제(Replication) 활성화
--- tr_rooms 테이블의 실시간 변경 사항을 감지하기 위해 supabase_realtime 출판물(Publication)에 등록합니다.
-BEGIN;
-  -- 기존 등록 제거 후 재등록 (중복 에러 방지)
-  ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS tr_rooms;
-  ALTER PUBLICATION supabase_realtime ADD TABLE tr_rooms;
-COMMIT;
+-- tr_rooms 테이블이 supabase_realtime 출판물에 아직 등록되지 않은 경우에만 동적으로 추가합니다.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_rel pr
+    JOIN pg_class c ON pr.prrelid = c.oid
+    JOIN pg_publication p ON pr.prpubid = p.oid
+    WHERE p.pubname = 'supabase_realtime' AND c.relname = 'tr_rooms'
+  ) THEN
+    EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE tr_rooms';
+  END IF;
+END $$;
