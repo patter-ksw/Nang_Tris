@@ -1459,119 +1459,198 @@ body {
     text-shadow: 0 0 15px rgba(248, 113, 113, 0.4);
 }
 
-/* --- 모바일 터치 패드 컨트롤러 디자인 --- */
+/* --- 모바일 터치 패드 컨트롤러 디자인 및 모바일 화면 완벽 최적화 (max-width: 900px) --- */
 
 .mobile-only-flex {
     display: none !important;
 }
 
 @media (max-width: 900px), (pointer: coarse) {
-    .mobile-only-flex {
+    /* 1. 기본 앱 컨테이너 패딩 조절 */
+    #app {
+        padding: 10px !important;
+    }
+
+    /* 2. 로그인/회원가입 화면 모바일 최적화 (글씨 잘림/밑으로 밀림 방지) */
+    .auth-card {
+        padding: 24px 16px !important;
+        width: 100% !important;
+        max-width: 340px !important;
+        margin: 0 auto !important;
+    }
+    .logo-emoji {
+        font-size: 3rem !important;
+    }
+    .logo-text {
+        font-size: 1.8rem !important;
+        white-space: nowrap !important;
+    }
+    .logo-subtext {
+        font-size: 0.8rem !important;
+    }
+    .auth-tabs {
+        margin-bottom: 18px !important;
+    }
+    .auth-tab {
+        padding: 8px !important;
+        font-size: 0.85rem !important;
+    }
+    .input-group {
+        margin-bottom: 14px !important;
+    }
+    .input-group label {
+        font-size: 0.8rem !important;
+    }
+    .input-group input {
+        padding: 10px !important;
+        font-size: 0.9rem !important;
+    }
+    #auth-submit-btn {
+        padding: 12px !important;
+        font-size: 0.88rem !important;
+    }
+
+    /* 3. 로비 화면 모바일 최적화 (헤더와 정보가 우측 화면으로 밀려나가는 현상 해결) */
+    #lobby-section {
+        max-width: 100% !important;
+        padding: 0 !important;
+        min-height: auto !important;
+        gap: 12px !important;
+    }
+    .lobby-header {
+        flex-direction: column !important;
+        gap: 12px !important;
+        padding: 12px !important;
+        align-items: center !important;
+        text-align: center !important;
+        margin: 0 0 5px 0 !important;
+        border-radius: var(--border-radius-md) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .lobby-logo {
+        gap: 6px !important;
+    }
+    .lobby-logo .logo-emoji {
+        font-size: 1.8rem !important;
+    }
+    .lobby-logo .logo-title {
+        font-size: 1.3rem !important;
+    }
+    .user-profile {
+        width: 100% !important;
+        justify-content: center !important;
+        gap: 10px !important;
+    }
+    .user-info {
+        font-size: 0.82rem !important;
+    }
+    .user-profile .btn {
+        padding: 6px 10px !important;
+        font-size: 0.78rem !important;
+    }
+
+    /* 로비 컨텐츠 모바일 세로 배치 */
+    .lobby-content {
+        padding: 0 4px !important;
         display: flex !important;
+        flex-direction: column !important;
+        gap: 15px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .lobby-main {
+        gap: 15px !important;
+    }
+    .quick-play-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    .play-card {
+        padding: 15px !important;
+        text-align: center !important;
+    }
+    .play-card h3 {
+        font-size: 1.1rem !important;
+    }
+    .play-card p {
+        font-size: 0.78rem !important;
+        margin-bottom: 10px !important;
+    }
+    .play-card .btn {
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+        width: 100% !important;
     }
     
-    .controls-guide-bar {
-        display: none !important;
+    /* 대기실 리스트 테이블 크기 조절 */
+    .rooms-container {
+        padding: 10px !important;
     }
-}
+    .container-header h3 {
+        font-size: 0.95rem !important;
+    }
+    .rooms-table th, .rooms-table td {
+        padding: 6px 4px !important;
+        font-size: 0.75rem !important;
+    }
+    .rooms-table th {
+        font-size: 0.72rem !important;
+    }
 
-.mobile-controls-container {
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-    max-width: 400px;
-    margin: 15px auto 0 auto;
-    padding: 12px;
-    border-radius: var(--border-radius-lg);
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-sizing: border-box;
-}
+    /* 글로벌 랭킹 보드 조절 */
+    .ranking-board {
+        padding: 12px 10px !important;
+    }
+    .ranking-header h3 {
+        font-size: 0.95rem !important;
+    }
+    .rank-tab {
+        padding: 4px 6px !important;
+        font-size: 0.72rem !important;
+    }
+    .ranking-list {
+        gap: 5px !important;
+    }
+    .rank-item {
+        padding: 6px 8px !important;
+    }
+    .rank-name {
+        font-size: 0.78rem !important;
+    }
+    .rank-score {
+        font-size: 0.8rem !important;
+    }
 
-.hold-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-}
+    /* 4. 게임 화면 레이아웃 및 찌그러짐 완벽 해결 */
+    .game-header {
+        padding: 8px 12px !important;
+        margin-bottom: 8px !important;
+        border-radius: var(--border-radius-md) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .game-title {
+        font-size: 0.95rem !important;
+    }
+    .game-mode-badge {
+        padding: 2px 6px !important;
+        font-size: 0.62rem !important;
+    }
+    .game-layout-grid {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    .player-panel {
+        width: 100% !important;
+        max-width: 320px !important;
+        padding: 8px !important;
+        box-sizing: border-box !important;
+    }
 
-.hold-row .ctrl-btn {
-    flex: 1;
-    height: 42px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    border-radius: 12px;
-    letter-spacing: 1px;
-}
-
-.control-main-layout {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-}
-
-.dpad-container {
-    display: flex;
-    gap: 10px;
-}
-
-.actions-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.ctrl-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--text-color);
-    font-family: 'Fredoka', 'Noto Sans KR', sans-serif;
-    font-size: 1.3rem;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.08s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-    -webkit-tap-highlight-color: transparent;
-}
-
-.dpad-container .ctrl-btn,
-.actions-container .ctrl-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-}
-
-.actions-container .btn-hard-drop {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--color-accent);
-    color: white;
-    font-weight: 700;
-    font-size: 0.9rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* 활성 피드백 */
-.ctrl-btn:active {
-    background: var(--color-primary);
-    color: white;
-    transform: scale(0.9);
-    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
-}
-
-.actions-container .btn-hard-drop:active {
-    background: #ff5487;
-    transform: scale(0.9);
-}
-
-/* --- 모바일 및 태블릿 화면을 위한 레이아웃 재배치 (HOLD/NEXT 상단 배치) --- */
-@media (max-width: 600px), (pointer: coarse) {
-    /* 1. 패널 배치: hold/next를 상단에 가로로, 메인 보드를 하단에 배치 */
+    /* 그리드로 전환: HOLD(좌)와 NEXT(우)를 최상단에, 캔버스를 그 아래에 배치 */
     .board-container {
         display: grid !important;
         grid-template-areas: 
@@ -1580,13 +1659,13 @@ body {
         grid-template-columns: 1fr 1fr !important;
         gap: 8px !important;
         width: 100% !important;
-        max-width: 320px !important;
+        max-width: 300px !important;
         margin: 0 auto !important;
         justify-content: center !important;
         align-items: start !important;
     }
-    
-    /* 2. 좌측 영역 (HOLD + STATS) 재구성 */
+
+    /* 좌측 영역 (HOLD + STATS) 가로 배치 */
     .side-panel.left-side {
         grid-area: left !important;
         display: flex !important;
@@ -1596,65 +1675,58 @@ body {
         justify-content: space-around !important;
         background: rgba(255, 255, 255, 0.04) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        padding: 6px !important;
+        padding: 5px !important;
         border-radius: var(--border-radius-md) !important;
-        gap: 6px !important;
+        gap: 4px !important;
         height: auto !important;
     }
-    
     .side-panel.left-side .hold-box {
         padding: 4px !important;
         background: rgba(0, 0, 0, 0.3) !important;
         margin: 0 !important;
         border-radius: 8px !important;
-        width: 58px !important;
-        height: 58px !important;
+        width: 52px !important;
+        height: 52px !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
     }
-    
     .side-panel.left-side .hold-box .box-title {
-        font-size: 0.55rem !important;
+        font-size: 0.52rem !important;
         margin-bottom: 2px !important;
     }
-    
     .side-panel.left-side .hold-box canvas,
     .side-panel.right-side .next-box canvas {
         max-width: 100% !important;
         height: auto !important;
         display: block !important;
     }
-    
     .game-stats-box {
         display: flex !important;
         flex-direction: column !important;
         gap: 2px !important;
         margin: 0 !important;
     }
-    
     .stat-item {
         margin: 0 !important;
         display: flex !important;
         flex-direction: row !important;
         justify-content: space-between !important;
         align-items: center !important;
-        gap: 6px !important;
-        width: 75px !important;
+        gap: 4px !important;
+        width: 68px !important;
     }
-    
     .stat-label {
-        font-size: 0.55rem !important;
+        font-size: 0.52rem !important;
         margin: 0 !important;
     }
-    
     .stat-value {
-        font-size: 0.8rem !important;
+        font-size: 0.75rem !important;
         margin: 0 !important;
     }
 
-    /* 3. 우측 영역 (NEXT + ATTACK) 재구성 */
+    /* 우측 영역 (NEXT + ATTACK) 가로 배치 */
     .side-panel.right-side {
         grid-area: right !important;
         display: flex !important;
@@ -1664,52 +1736,47 @@ body {
         justify-content: space-around !important;
         background: rgba(255, 255, 255, 0.04) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        padding: 6px !important;
+        padding: 5px !important;
         border-radius: var(--border-radius-md) !important;
-        gap: 6px !important;
+        gap: 4px !important;
         height: auto !important;
     }
-    
     .side-panel.right-side .next-box {
         padding: 4px !important;
         background: rgba(0, 0, 0, 0.3) !important;
         margin: 0 !important;
         border-radius: 8px !important;
-        width: 58px !important;
-        height: 58px !important;
+        width: 52px !important;
+        height: 52px !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         overflow: hidden !important;
     }
-    
     .side-panel.right-side .next-box .box-title {
-        font-size: 0.55rem !important;
+        font-size: 0.52rem !important;
         margin-bottom: 2px !important;
     }
-    
     .garbage-gauge-container {
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
-        gap: 6px !important;
+        gap: 4px !important;
         height: auto !important;
         margin: 0 !important;
     }
-    
     .gauge-title {
-        font-size: 0.55rem !important;
+        font-size: 0.52rem !important;
         margin: 0 !important;
     }
-    
     .gauge-bar-wrapper {
-        height: 48px !important;
-        width: 10px !important;
+        height: 40px !important;
+        width: 8px !important;
         margin: 0 !important;
     }
 
-    /* 4. 메인 캔버스 영역 (수축 및 잘림 방지) */
+    /* 메인 캔버스 (수축 방지 및 크기 고정) */
     .canvas-wrapper {
         grid-area: main !important;
         width: 250px !important;
@@ -1717,28 +1784,97 @@ body {
         flex-shrink: 0 !important;
         margin: 0 auto !important;
     }
-    
     .canvas-wrapper canvas {
         width: 250px !important;
         height: 500px !important;
         display: block !important;
     }
+
+    /* 5. 모바일 가상 패드 강제 활성화 */
+    .mobile-only-flex {
+        display: flex !important;
+    }
+    .controls-guide-bar {
+        display: none !important;
+    }
+    .mobile-controls-container {
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 10px !important;
+        gap: 8px !important;
+        width: 100% !important;
+        max-width: 320px !important;
+        margin: 10px auto 0 auto !important;
+    }
+    .hold-row {
+        gap: 8px !important;
+    }
+    .hold-row .ctrl-btn {
+        height: 38px !important;
+        font-size: 0.85rem !important;
+        border-radius: 10px !important;
+    }
+    .control-main-layout {
+        gap: 12px !important;
+    }
+    .dpad-container {
+        gap: 8px !important;
+    }
+    .actions-container {
+        gap: 8px !important;
+    }
+    .ctrl-btn {
+        font-size: 1.1rem !important;
+    }
+    .dpad-container .ctrl-btn,
+    .actions-container .ctrl-btn {
+        width: 46px !important;
+        height: 46px !important;
+    }
+    .actions-container .btn-hard-drop {
+        width: 52px !important;
+        height: 52px !important;
+        font-size: 0.78rem !important;
+    }
 }
 
-/* 초소형 모바일 디바이스 (가로폭 360px 이하) 미세 축소 */
+/* 초소형 스마트폰 (가로폭 360px 이하) 추가 축소 */
 @media (max-width: 360px) {
+    .player-panel {
+        max-width: 290px !important;
+        padding: 6px !important;
+    }
     .canvas-wrapper {
-        width: 220px !important;
-        height: 440px !important;
+        width: 210px !important;
+        height: 420px !important;
     }
-    
     .canvas-wrapper canvas {
-        width: 220px !important;
-        height: 440px !important;
+        width: 210px !important;
+        height: 420px !important;
     }
-    
     .board-container {
         max-width: 270px !important;
+        gap: 4px !important;
+    }
+    .side-panel.left-side,
+    .side-panel.right-side {
+        padding: 4px !important;
+    }
+    .mobile-controls-container {
+        max-width: 290px !important;
+        padding: 6px !important;
+    }
+    .dpad-container .ctrl-btn,
+    .actions-container .ctrl-btn {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 0.95rem !important;
+    }
+    .actions-container .btn-hard-drop {
+        width: 46px !important;
+        height: 46px !important;
+        font-size: 0.7rem !important;
     }
 }
+
 
