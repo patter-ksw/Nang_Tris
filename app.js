@@ -304,10 +304,10 @@ async function handleAuthSubmit(e) {
                 return;
             }
 
-            // 유저 삽입
+            // 유저 삽입 (name 컬럼이 NOT NULL이므로 nickname과 동일하게 채워줍니다)
             const { data, error } = await supabaseClient
                 .from('tr_users')
-                .insert([{ username, password, nickname }])
+                .insert([{ username, password, nickname, name: nickname }])
                 .select()
                 .single();
 
@@ -334,8 +334,9 @@ function handleLogout() {
 
 // 로그인 완료 후 처리
 function onUserLoggedIn() {
-    document.getElementById('user-display-name').textContent = currentUser.nickname;
-    document.getElementById('player-self-name').textContent = `${currentUser.nickname} (나)`;
+    const displayName = currentUser.nickname || currentUser.username;
+    document.getElementById('user-display-name').textContent = displayName;
+    document.getElementById('player-self-name').textContent = `${displayName} (나)`;
     
     // 내 기록 카드 및 글로벌 랭킹 보드 로드
     loadMyRecord();
@@ -464,7 +465,7 @@ async function handleCreateRoomSubmit(e) {
                 title,
                 password,
                 creator_id: currentUser.id,
-                creator_nickname: currentUser.nickname,
+                creator_nickname: currentUser.nickname || currentUser.username,
                 status: 'waiting'
             }])
             .select()
@@ -539,7 +540,7 @@ async function executeJoinRoom(roomId, password) {
             .from('tr_rooms')
             .update({
                 opponent_id: currentUser.id,
-                opponent_nickname: currentUser.nickname
+                opponent_nickname: currentUser.nickname || currentUser.username
             })
             .eq('id', roomId)
             .select()
@@ -2365,7 +2366,7 @@ function syncGameStateToOpponent() {
     if (!gameRealtimeChannel) return;
     
     const packet = {
-        nickname: currentUser ? currentUser.nickname : '집사',
+        nickname: currentUser ? (currentUser.nickname || currentUser.username) : '집사',
         grid: gameStateSelf.grid,
         score: gameStateSelf.score,
         lines: gameStateSelf.lines,
