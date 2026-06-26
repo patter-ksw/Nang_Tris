@@ -2408,10 +2408,15 @@ function enterGameRoom(room) {
         // 준비 상태 메세지 및 채널 연결
         updateMultiplayStatus();
         subscribeGameChannel(room.id);
-        
-        if (isHost) {
-            // 방장인 경우 상대가 들어와 동기화 신호를 주기 전까지 대기
-            document.getElementById('btn-start-game').disabled = !room.opponent_id;
+        // 방장인 경우 대기방 시작 버튼 노출 및 활성화 제어 (헤더 내 배치)
+        const startBtn = document.getElementById('btn-start-game');
+        if (startBtn) {
+            if (isHost) {
+                startBtn.classList.remove('hidden');
+                startBtn.disabled = !room.opponent_id;
+            } else {
+                startBtn.classList.add('hidden');
+            }
         }
     } else {
         // 싱글플레이 모드 돌입
@@ -2423,6 +2428,10 @@ function enterGameRoom(room) {
         // 모바일 가상 패드에 어택 버튼 숨김
         const mobileAttackBtn = document.getElementById('btn-mobile-attack');
         if (mobileAttackBtn) mobileAttackBtn.classList.add('hidden');
+        
+        // 시작 버튼 숨김
+        const startBtn = document.getElementById('btn-start-game');
+        if (startBtn) startBtn.classList.add('hidden');
         
         // 멀티플레이 채팅창 숨김
         const chatContainer = document.getElementById('battle-chat-container');
@@ -2478,11 +2487,13 @@ function updateMultiplayStatus() {
     const msg = document.getElementById('multiplay-status-text');
 
     if (isHost) {
-        btn.disabled = false;
-        msg.textContent = "방장입니다. 준비되셨으면 시작 버튼을 눌러주세요!";
+        if (btn) btn.disabled = false;
+        if (msg) msg.textContent = "방장입니다. 준비되셨으면 시작 버튼을 눌러주세요!";
+        appendChatMessage("시스템", "방장입니다. 준비되셨으면 상단의 [시작] 버튼을 클릭해 게임을 진행해달라옹! 🐾", false, true);
     } else {
-        btn.disabled = true; // 방장만 시작 가능
-        msg.textContent = "방장이 게임을 시작하기를 기다리는 중...";
+        if (btn) btn.disabled = true; // 방장만 시작 가능
+        if (msg) msg.textContent = "방장이 게임을 시작하기를 기다리는 중...";
+        appendChatMessage("시스템", "방장이 게임을 시작하기를 기다리는 중이다옹... 🐾", false, true);
     }
 }
 
@@ -2517,6 +2528,7 @@ function subscribeGameChannel(roomId) {
             if (isHost) {
                 document.getElementById('btn-start-game').disabled = true;
                 document.getElementById('multiplay-status-text').textContent = '상대방이 방을 나갔습니다. 대기 중...';
+                appendChatMessage("시스템", "상대방이 방을 나갔습니다. 대기 중... 🐾", false, true);
             }
         })
         .on('broadcast', { event: 'host-left' }, () => {
@@ -2545,6 +2557,7 @@ function handleOpponentSync(payload) {
         document.getElementById('btn-start-game').disabled = false;
         if (payload.nickname) {
             document.getElementById('multiplay-status-text').textContent = `${payload.nickname}님이 입장하셨습니다! 게임을 시작해주세요.`;
+            appendChatMessage("시스템", `${payload.nickname}님이 입장하셨습니다! 게임을 시작해달라옹! 🐾`, false, true);
         }
     }
     
@@ -2891,6 +2904,12 @@ async function exitToLobby() {
         chatContainer.classList.add('hidden');
     }
     
+    // 시작 버튼 숨김
+    const startBtn = document.getElementById('btn-start-game');
+    if (startBtn) {
+        startBtn.classList.add('hidden');
+    }
+    
     showSection('lobby-section');
 
     // 멀티룸 퇴장 처리
@@ -2967,22 +2986,28 @@ function sendBattleChatMessage(e) {
     input.value = '';
 }
 
-function appendChatMessage(sender, text, isSelf) {
+function appendChatMessage(sender, text, isSelf, isSystem = false) {
     const log = document.getElementById('battle-chat-messages');
     if (!log) return;
     
     const msgDiv = document.createElement('div');
-    msgDiv.className = isSelf ? 'chat-msg self' : 'chat-msg opp';
+    if (isSystem) {
+        msgDiv.className = 'chat-msg chat-system';
+    } else {
+        msgDiv.className = isSelf ? 'chat-msg self' : 'chat-msg opp';
+    }
     
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'chat-sender';
-    nameSpan.textContent = isSelf ? '나: ' : `${sender}: `;
+    if (!isSystem) {
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'chat-sender';
+        nameSpan.textContent = isSelf ? '나: ' : `${sender}: `;
+        msgDiv.appendChild(nameSpan);
+    }
     
     const textSpan = document.createElement('span');
     textSpan.className = 'chat-text';
     textSpan.textContent = text;
     
-    msgDiv.appendChild(nameSpan);
     msgDiv.appendChild(textSpan);
     log.appendChild(msgDiv);
     

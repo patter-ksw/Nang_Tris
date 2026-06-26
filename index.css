@@ -66,7 +66,7 @@ body {
     align-items: center;
     position: relative;
     z-index: 10;
-    padding: 20px;
+    padding: 10px 20px;
 }
 
 /* --- 3. 배경 장식 애니메이션 --- */
@@ -725,10 +725,10 @@ body {
 /* --- 9. 게임 플레이 화면 (Game Section) --- */
 #game-section {
     width: 100%;
-    max-width: 1000px;
+    max-width: 1040px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 8px;
     height: 100%;
 }
 
@@ -736,13 +736,19 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 24px;
+    padding: 8px 16px;
+}
+
+.game-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .game-info-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
 }
 
 .game-title {
@@ -763,7 +769,7 @@ body {
 .game-content {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 8px;
     align-items: center;
 }
 
@@ -780,7 +786,7 @@ body {
 .player-panel {
     display: flex;
     flex-direction: column;
-    padding: 16px;
+    padding: 10px 12px;
     border-radius: var(--border-radius-lg);
     background: var(--bg-card);
     width: 100%;
@@ -798,9 +804,9 @@ body {
 .player-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -970,12 +976,7 @@ body {
 
 /* 멀티플레이 조작바 */
 .multiplay-control-bar {
-    width: 100%;
-    max-width: 980px;
-    padding: 16px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: none !important;
 }
 
 .multiplay-control-bar .status-msg {
@@ -986,12 +987,12 @@ body {
 /* 컨트롤 가이드 바 */
 .controls-guide-bar {
     width: 100%;
-    max-width: 980px;
-    padding: 10px 20px;
+    max-width: 1020px;
+    padding: 6px 16px;
     display: flex;
     justify-content: space-around;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 6px;
     font-size: 0.8rem;
     color: var(--text-muted);
 }
@@ -1922,22 +1923,23 @@ body {
 
 /* 멀티플레이 간단 채팅창 스타일 */
 .battle-chat-wrapper {
-    max-width: 580px;
-    margin: 12px auto;
-    padding: 10px;
+    width: 100%;
+    max-width: 1020px;
+    margin: 6px auto;
+    padding: 8px;
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .battle-chat-log {
-    height: 90px;
+    height: 70px;
     overflow-y: auto;
     background: rgba(0, 0, 0, 0.25);
     border-radius: 8px;
-    padding: 8px;
+    padding: 6px 10px;
     font-size: 0.85rem;
     display: flex;
     flex-direction: column;
@@ -1993,6 +1995,22 @@ body {
 
 #battle-chat-input:focus {
     border-color: var(--color-primary);
+}
+
+/* 데스크톱 세로 스크롤 방지 및 컴팩트 레이아웃 */
+@media (min-width: 1025px) {
+    body {
+        overflow-y: hidden !important;
+    }
+    #app {
+        padding: 8px 20px !important;
+    }
+    .game-content {
+        gap: 6px !important;
+    }
+    .battle-chat-wrapper {
+        margin: 4px auto !important;
+    }
 }
 
 
