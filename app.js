@@ -1838,6 +1838,10 @@ async function handleGameOver() {
         title.style.color = "#f87171"; // Red
         subtitle.textContent = "아쉽게 패배했다웅... 다음엔 이겨보자옹!";
         
+        // 멀티 보드 결과 오버레이 표시 (나: 패배, 상대: 승리)
+        showBoardResult('self', false);
+        showBoardResult('opp', true);
+        
         // 멀티 최고 스코어 랭킹업 로드
         await uploadHighScore('multi', gameStateSelf.score);
     } else {
@@ -2161,6 +2165,7 @@ function resetLocalGameState() {
     clearCanvas(canvasNextSelf, ctxNextSelf);
     updateStatsUI();
     updateGarbageGauge('self', 0);
+    hideBoardResults(); // 보드 결과 오버레이 숨기기
 }
 
 // 멀티플레이 상태메세지 갱신
@@ -2293,10 +2298,57 @@ function handleOpponentLoss() {
     document.getElementById('overlay-score').textContent = gameStateSelf.score;
     document.getElementById('overlay-lines').textContent = gameStateSelf.lines;
     
+    // 멀티 보드 결과 오버레이 표시 (나: 승리, 상대: 패배)
+    showBoardResult('self', true);
+    showBoardResult('opp', false);
+    
     document.getElementById('game-overlay').classList.remove('hidden');
     
     // 랭킹 스코어 업데이트
     uploadHighScore('multi', gameStateSelf.score);
+}
+
+// 개별 보드 결과 오버레이 제어 (승리/패배 고양이 춤/눈물 연출)
+function showBoardResult(player, isWin) {
+    const overlay = document.getElementById(`board-result-${player}`);
+    if (!overlay) return;
+    
+    const title = overlay.querySelector('.result-title');
+    const cat = overlay.querySelector('.dancing-cat');
+    const leftEye = overlay.querySelector('.eye.left');
+    const rightEye = overlay.querySelector('.eye.right');
+    
+    overlay.classList.remove('hidden', 'win', 'lose');
+    
+    if (isWin) {
+        overlay.classList.add('win');
+        if (title) title.textContent = "WIN 👑";
+        if (leftEye && rightEye) {
+            leftEye.textContent = "^";
+            rightEye.textContent = "^";
+        }
+        if (cat) {
+            cat.classList.remove('sad', 'somersault');
+        }
+    } else {
+        overlay.classList.add('lose');
+        if (title) title.textContent = "LOSE ㅠ";
+        if (leftEye && rightEye) {
+            leftEye.textContent = "ㅠ";
+            rightEye.textContent = "ㅠ";
+        }
+        if (cat) {
+            cat.classList.remove('somersault');
+            cat.classList.add('sad'); // 우는 고양이 CSS 애니메이션 적용
+        }
+    }
+}
+
+function hideBoardResults() {
+    const selfOverlay = document.getElementById('board-result-self');
+    const oppOverlay = document.getElementById('board-result-opp');
+    if (selfOverlay) selfOverlay.classList.add('hidden');
+    if (oppOverlay) oppOverlay.classList.add('hidden');
 }
 
 // 게이지 바 그래픽 표현

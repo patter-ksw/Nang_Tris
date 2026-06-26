@@ -227,6 +227,27 @@
                             <div class="canvas-wrapper">
                                 <canvas id="canvas-grid-self" width="250" height="500"></canvas>
                                 <div id="game-start-countdown" class="overlay-countdown hidden">3</div>
+                                <!-- 내 보드 결과 오버레이 (멀티용) -->
+                                <div id="board-result-self" class="board-result-overlay hidden">
+                                    <h3 class="result-title">WIN</h3>
+                                    <div class="cat-animation-wrapper">
+                                        <div class="dancing-cat">
+                                            <div class="cat-ears">
+                                                <span class="ear left"></span>
+                                                <span class="ear right"></span>
+                                            </div>
+                                            <div class="cat-face">
+                                                <div class="cat-eyes">
+                                                    <span class="eye left">^</span>
+                                                    <span class="eye right">^</span>
+                                                </div>
+                                                <div class="cat-nose">w</div>
+                                            </div>
+                                            <div class="cat-body"></div>
+                                            <div class="cat-tail"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- 넥스트 영역 -->
@@ -276,6 +297,27 @@
                                 <canvas id="canvas-grid-opp" width="250" height="500"></canvas>
                                 <div id="opponent-disconnected-overlay" class="disconnected-overlay hidden">
                                     <p>상대방의 연결을 기다리는 중...</p>
+                                </div>
+                                <!-- 상대 보드 결과 오버레이 (멀티용) -->
+                                <div id="board-result-opp" class="board-result-overlay hidden">
+                                    <h3 class="result-title">LOSE</h3>
+                                    <div class="cat-animation-wrapper">
+                                        <div class="dancing-cat">
+                                            <div class="cat-ears">
+                                                <span class="ear left"></span>
+                                                <span class="ear right"></span>
+                                            </div>
+                                            <div class="cat-face">
+                                                <div class="cat-eyes">
+                                                    <span class="eye left">^</span>
+                                                    <span class="eye right">^</span>
+                                                </div>
+                                                <div class="cat-nose">w</div>
+                                            </div>
+                                            <div class="cat-body"></div>
+                                            <div class="cat-tail"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
