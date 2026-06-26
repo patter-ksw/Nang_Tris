@@ -1821,6 +1821,7 @@ function drawNextQueue() {
 async function handleGameOver() {
     isGameRunning = false;
     stopBGM();
+    playGameOverSound(); // 실망한 효과음 재생
     
     // 오버레이 노출
     const title = document.getElementById('overlay-title');
@@ -1862,7 +1863,10 @@ async function handleGameOver() {
 function triggerStageClear() {
     isGameRunning = false;
     stopBGM();
-    playStageClearFanfare(); // 승리 팡파레 음악 연주
+    
+    // "야옹" 소리를 먼저 내고, 320ms 후에 신나는 승리 팡파레 음악 연주!
+    playMeowSound();
+    setTimeout(playStageClearFanfare, 320);
     
     const title = document.getElementById('overlay-title');
     const subtitle = document.getElementById('overlay-subtitle');
@@ -1874,10 +1878,18 @@ function triggerStageClear() {
     document.getElementById('overlay-score').textContent = gameStateSelf.score;
     document.getElementById('overlay-lines').textContent = gameStateSelf.lines;
     
+    // 눈 모양을 신나는 눈(^)으로 복원
+    const leftEye = document.querySelector('.dancing-cat .eye.left');
+    const rightEye = document.querySelector('.dancing-cat .eye.right');
+    if (leftEye && rightEye) {
+        leftEye.textContent = "^";
+        rightEye.textContent = "^";
+    }
+    
     // 고양이 공중제비 애니메이션 트리거
     const cat = document.querySelector('.dancing-cat');
     if (cat) {
-        cat.classList.remove('somersault');
+        cat.classList.remove('somersault', 'sad');
         void cat.offsetWidth; // Reflow 트리거
         cat.classList.add('somersault');
     }
@@ -1895,6 +1907,18 @@ function triggerStageClear() {
 // 다음 스테이지 시작 처리
 function startNextStage() {
     document.getElementById('game-overlay').classList.add('hidden');
+    
+    // 애니메이션 및 눈 복원
+    const cat = document.querySelector('.dancing-cat');
+    if (cat) {
+        cat.classList.remove('somersault', 'sad');
+    }
+    const leftEye = document.querySelector('.dancing-cat .eye.left');
+    const rightEye = document.querySelector('.dancing-cat .eye.right');
+    if (leftEye && rightEye) {
+        leftEye.textContent = "^";
+        rightEye.textContent = "^";
+    }
     
     gameStateSelf.stage++;
     gameStateSelf.stageLines = 0; // 누적 라인 초기화
@@ -1966,6 +1990,54 @@ function playStageClearFanfare() {
         });
     } catch (e) {
         console.error("Fanfare audio error:", e);
+}
+
+// 게임오버 시 실망한 효과음 합성 (G3 -> F3 -> Eb3 -> C3 하향 진행 및 피치 슬라이드)
+function playGameOverSound() {
+    if (isMuted) return;
+    try {
+        initAudio();
+        const now = audioCtx.currentTime;
+        
+        const failNotes = [196.00, 174.61, 155.56, 130.81]; // 슬픈 단조 음계 하행
+        const durations = [0.18, 0.18, 0.18, 0.5];
+        
+        let timeOffset = 0;
+        failNotes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sawtooth';
+            
+            // 먹먹한 음색을 위해 로우패스 필터 사용
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(420, now + timeOffset);
+            
+            const startT = now + timeOffset;
+            const dur = durations[idx];
+            
+            osc.frequency.setValueAtTime(freq, startT);
+            if (idx === 3) {
+                // 마지막 음은 축 처지며 주파수가 내려가는 효과 (실망감 연출)
+                osc.frequency.exponentialRampToValueAtTime(75, startT + dur);
+            }
+            
+            gainNode.gain.setValueAtTime(0, startT);
+            gainNode.gain.linearRampToValueAtTime(0.08, startT + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startT + dur);
+            
+            osc.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(masterGain || audioCtx.destination);
+            
+            osc.start(startT);
+            osc.stop(startT + dur);
+            
+            timeOffset += dur - 0.02; // 음 간의 자연스러운 오버랩
+        });
+    } catch (e) {
+        console.error("GameOver audio error:", e);
     }
 }
 
@@ -2350,6 +2422,19 @@ function startGameExecution() {
 
 function restartCurrentGame() {
     document.getElementById('game-overlay').classList.add('hidden');
+    
+    // 고양이 애니메이션 및 눈 상태 복원
+    const cat = document.querySelector('.dancing-cat');
+    if (cat) {
+        cat.classList.remove('somersault', 'sad');
+    }
+    const leftEye = document.querySelector('.dancing-cat .eye.left');
+    const rightEye = document.querySelector('.dancing-cat .eye.right');
+    if (leftEye && rightEye) {
+        leftEye.textContent = "^";
+        rightEye.textContent = "^";
+    }
+    
     if (isMultiplayMode) {
         // 호스트인 경우에만 재시작 트리거
         if (isHost) {
