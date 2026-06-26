@@ -27,6 +27,13 @@ class NangTrisHandler(http.server.SimpleHTTPRequestHandler):
         # Serve static files from the current directory
         return super().translate_path(path)
 
+    def end_headers(self):
+        # Disable browser caching for development
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        super().end_headers()
+
     def do_GET(self):
         # Respond to both /config and /api/config
         if self.path in ('/config', '/api/config'):
