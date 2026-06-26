@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>냥트리스 (Nang_Tris) - 귀여운 고양이 테트리스</title>
+    <!-- Google Fonts: Fredoka (영문/숫자용 동글동글 폰트) & Noto Sans KR (한국어) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons (귀여운 아이콘 세트) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 배경 데코레이션 요소들 (둥실둥실 떠다니는 구름/고양이 발바닥 등 CSS 장식용) -->
+        <div class="bg-decorations">
+            <div class="decor paw-1">🐾</div>
+            <div class="decor paw-2">🐾</div>
+            <div class="decor cat-silhouette-1">🐱</div>
+            <div class="decor cat-silhouette-2">😸</div>
+        </div>
+
+        <!-- 1. 인증 화면 (로그인/회원가입) -->
+        <section id="auth-section" class="app-section">
+            <div class="auth-card glassmorphism animate-fade-in">
+                <div class="auth-logo">
+                    <span class="logo-emoji">🐱</span>
+                    <h1 class="logo-text">냥트리스</h1>
+                    <p class="logo-subtext">Nang_Tris</p>
+                </div>
+                
+                <div class="auth-tabs">
+                    <button type="button" id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">로그인</button>
+                    <button type="button" id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">회원가입</button>
+                </div>
+
+                <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+                    <div class="input-group">
+                        <label for="auth-username"><i data-lucide="user"></i> 아이디</label>
+                        <input type="text" id="auth-username" required placeholder="아이디를 입력하세요">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="auth-password"><i data-lucide="lock"></i> 비밀번호</label>
+                        <input type="password" id="auth-password" required placeholder="비밀번호를 입력하세요">
+                    </div>
+
+                    <div class="input-group" id="nickname-group" style="display: none;">
+                        <label for="auth-nickname"><i data-lucide="smile"></i> 닉네임</label>
+                        <input type="text" id="auth-nickname" placeholder="게임에서 사용할 닉네임">
+                    </div>
+
+                    <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">
+                        <span>로그인하고 고양이 만나기</span> <i data-lucide="arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 2. 로비 화면 -->
+        <section id="lobby-section" class="app-section hidden">
+            <!-- 로비 상단 바 -->
+            <header class="lobby-header glassmorphism">
+                <div class="lobby-logo">
+                    <span class="logo-emoji">🐱</span>
+                    <span class="logo-title">냥트리스</span>
+                </div>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <span class="user-status-dot"></span>
+                        <span id="user-display-name" class="user-nickname">고양이집사</span>님
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="handleLogout()">
+                        <i data-lucide="log-out"></i> 로그아웃
+                    </button>
+                </div>
+            </header>
+
+            <!-- 로비 메인 레이아웃 -->
+            <div class="lobby-content">
+                <!-- 왼쪽 영역: 게임 모드 선택 및 멀티플레이 대기실 -->
+                <div class="lobby-main">
+                    <!-- 게임 시작 퀵 카드 -->
+                    <div class="quick-play-grid">
+                        <div class="play-card single glassmorphism animate-hover">
+                            <div class="card-icon">🐟</div>
+                            <h3>싱글 플레이</h3>
+                            <p>혼자서 점수를 쌓고 한계를 시험해보세요!</p>
+                            <button type="button" class="btn btn-primary" onclick="startSingleGame()">
+                                <i data-lucide="play"></i> 혼자하기
+                            </button>
+                        </div>
+                        
+                        <div class="play-card multi glassmorphism animate-hover">
+                            <div class="card-icon">🐾</div>
+                            <h3>멀티 배틀</h3>
+                            <p>실시간 1:1로 다른 집사와 피튀기는 방해 전투!</p>
+                            <button type="button" class="btn btn-accent" onclick="openCreateRoomModal()">
+                                <i data-lucide="plus-circle"></i> 방 만들기
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 실시간 대기방 리스트 -->
+                    <div class="rooms-container glassmorphism">
+                        <div class="container-header">
+                            <h3 class="section-title"><i data-lucide="swords"></i> 실시간 멀티플레이 대기방</h3>
+                            <button type="button" class="btn btn-icon-only" onclick="refreshRooms()" title="새로고침">
+                                <i data-lucide="rotate-cw"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="rooms-list-wrapper">
+                            <table class="rooms-table">
+                                <thead>
+                                    <tr>
+                                        <th>방 제목</th>
+                                        <th>방장</th>
+                                        <th>상태</th>
+                                        <th>인원</th>
+                                        <th style="width: 100px;">입장</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rooms-list">
+                                    <!-- 동적 삽입 -->
+                                    <tr>
+                                        <td colspan="5" class="empty-state">
+                                            <i data-lucide="loader-2" class="spin"></i> 대기방을 불러오는 중...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 오른쪽 영역: 개인 최고기록 & 글로벌 랭킹 보드 -->
+                <div class="lobby-sidebar">
+                    <!-- 내 최고 기록 카드 -->
+                    <div class="my-record-card glassmorphism">
+                        <div class="record-avatar">🐈</div>
+                        <div class="record-details">
+                            <h4>내 최고 기록</h4>
+                            <div class="record-scores">
+                                <div class="score-item">
+                                    <span class="score-label">싱글플레이</span>
+                                    <span id="my-single-score" class="score-value">0</span>
+                                </div>
+                                <div class="score-item">
+                                    <span class="score-label">멀티 배틀</span>
+                                    <span id="my-multi-score" class="score-value">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 글로벌 랭킹 보드 -->
+                    <div class="ranking-board glassmorphism">
+                        <div class="ranking-header">
+                            <h3 class="section-title"><i data-lucide="trophy"></i> 명예의 전당</h3>
+                            <div class="ranking-tabs">
+                                <button type="button" id="rank-tab-single" class="rank-tab active" onclick="switchRankingTab('single')">싱글</button>
+                                <button type="button" id="rank-tab-multi" class="rank-tab" onclick="switchRankingTab('multi')">멀티</button>
+                            </div>
+                        </div>
+                        
+                        <div class="ranking-list" id="ranking-list-body">
+                            <!-- 동적 삽입 -->
+                            <div class="empty-state">랭킹 데이터를 불러오는 중...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 게임 플레이 화면 -->
+        <section id="game-section" class="app-section hidden">
+            <!-- 게임 화면 상단 헤더 -->
+            <header class="game-header glassmorphism">
+                <div class="game-info-left">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="exitToLobby()">
+                        <i data-lucide="arrow-left"></i> 나가기
+                    </button>
+                    <span id="game-room-title" class="game-title">싱글 플레이 모드</span>
+                </div>
+                <div class="game-mode-badge" id="game-mode-badge">SINGLE</div>
+            </header>
+
+            <div class="game-content">
+                <!-- 멀티플레이어 레이아웃 -->
+                <div id="game-battle-layout" class="game-layout-grid">
+                    <!-- 좌측: 내 플레이어 영역 -->
+                    <div class="player-panel self glassmorphism">
+                        <div class="player-header">
+                            <span class="player-avatar">🐱</span>
+                            <span id="player-self-name" class="player-name">나 (집사)</span>
+                        </div>
+                        
+                        <div class="board-container">
+                            <!-- 홀드 영역 -->
+                            <div class="side-panel left-side">
+                                <div class="panel-box hold-box">
+                                    <div class="box-title">HOLD</div>
+                                    <canvas id="canvas-hold-self" width="80" height="80"></canvas>
+                                </div>
+                                <div class="game-stats-box">
+                                    <div class="stat-item">
+                                        <div class="stat-label">SCORE</div>
+                                        <div id="stat-score-self" class="stat-value">0</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">LINES</div>
+                                        <div id="stat-lines-self" class="stat-value">0</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">LEVEL</div>
+                                        <div id="stat-level-self" class="stat-value">1</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 메인 게임판 -->
+                            <div class="canvas-wrapper">
+                                <canvas id="canvas-grid-self" width="300" height="600"></canvas>
+                                <div id="game-start-countdown" class="overlay-countdown hidden">3</div>
+                            </div>
+
+                            <!-- 넥스트 영역 -->
+                            <div class="side-panel right-side">
+                                <div class="panel-box next-box">
+                                    <div class="box-title">NEXT</div>
+                                    <canvas id="canvas-next-self" width="80" height="160"></canvas>
+                                </div>
+                                <div class="garbage-gauge-container" title="보낼 장애물 게이지">
+                                    <div class="gauge-title">ATTACK</div>
+                                    <div class="gauge-bar-wrapper">
+                                        <div id="garbage-gauge-self" class="gauge-bar" style="height: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 우측: 상대방 영역 (멀티플레이어 모드 시 활성화) -->
+                    <div id="player-panel-opponent" class="player-panel opponent glassmorphism hidden">
+                        <div class="player-header">
+                            <span class="player-avatar">🐯</span>
+                            <span id="player-opp-name" class="player-name">상대 집사 대기중</span>
+                        </div>
+                        
+                        <div class="board-container">
+                            <!-- 상대 홀드 영역 -->
+                            <div class="side-panel left-side">
+                                <div class="panel-box hold-box">
+                                    <div class="box-title">HOLD</div>
+                                    <canvas id="canvas-hold-opp" width="80" height="80"></canvas>
+                                </div>
+                                <div class="game-stats-box">
+                                    <div class="stat-item">
+                                        <div class="stat-label">SCORE</div>
+                                        <div id="stat-score-opp" class="stat-value">0</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">LINES</div>
+                                        <div id="stat-lines-opp" class="stat-value">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 상대 메인 게임판 -->
+                            <div class="canvas-wrapper">
+                                <canvas id="canvas-grid-opp" width="300" height="600"></canvas>
+                                <div id="opponent-disconnected-overlay" class="disconnected-overlay hidden">
+                                    <p>상대방의 연결을 기다리는 중...</p>
+                                </div>
+                            </div>
+
+                            <!-- 상대 넥스트 영역 -->
+                            <div class="side-panel right-side">
+                                <div class="panel-box next-box">
+                                    <div class="box-title">NEXT</div>
+                                    <canvas id="canvas-next-opp" width="80" height="80"></canvas>
+                                </div>
+                                <div class="garbage-gauge-container">
+                                    <div class="gauge-title">ATTACK</div>
+                                    <div class="gauge-bar-wrapper">
+                                        <div id="garbage-gauge-opp" class="gauge-bar" style="height: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 멀티플레이 전용 하단 조작 바 (시작 및 준비 버튼) -->
+                <div id="multiplay-controls" class="multiplay-control-bar glassmorphism hidden">
+                    <span class="status-msg" id="multiplay-status-text">상대방 참가를 기다리고 있습니다...</span>
+                    <div class="control-actions">
+                        <button type="button" id="btn-start-game" class="btn btn-primary" onclick="requestStartGame()" disabled>
+                            <i data-lucide="play"></i> 게임 시작
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 키 조작 가이드 -->
+                <div class="controls-guide-bar glassmorphism">
+                    <span><strong>이동:</strong> ← →</span>
+                    <span><strong>하드드롭:</strong> Space</span>
+                    <span><strong>소프트드롭:</strong> ↓</span>
+                    <span><strong>회전:</strong> ↑ (우), Z (좌)</span>
+                    <span><strong>홀드:</strong> C 또는 Shift</span>
+                    <span><strong>일시정지:</strong> P (싱글용)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= MODALS & OVERLAYS ================= -->
+
+        <!-- 방 만들기 모달 -->
+        <div id="create-room-modal" class="modal-overlay hidden">
+            <div class="modal-content glassmorphism animate-pop-in">
+                <div class="modal-header">
+                    <h3><i data-lucide="plus-circle"></i> 멀티플레이 방 만들기</h3>
+                    <button type="button" class="btn-close" onclick="closeCreateRoomModal()">&times;</button>
+                </div>
+                <form onsubmit="handleCreateRoomSubmit(event)">
+                    <div class="input-group">
+                        <label for="room-title">방 제목</label>
+                        <input type="text" id="room-title" required placeholder="고양이를 사랑하는 집사 방!" maxlength="20">
+                    </div>
+                    <div class="switch-group">
+                        <span class="switch-label">비밀번호 설정</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="room-pw-toggle" onchange="toggleRoomPwInput(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="input-group hidden" id="room-pw-wrapper">
+                        <label for="room-password">비밀번호</label>
+                        <input type="password" id="room-password" placeholder="비밀번호 4자리" maxlength="10">
+                    </div>
+                    <button type="submit" class="btn btn-accent btn-block">방 만들기냥!</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 방 비밀번호 입력 모달 -->
+        <div id="password-room-modal" class="modal-overlay hidden">
+            <div class="modal-content glassmorphism animate-pop-in">
+                <div class="modal-header">
+                    <h3><i data-lucide="lock"></i> 비밀번호 입력</h3>
+                    <button type="button" class="btn-close" onclick="closePasswordRoomModal()">&times;</button>
+                </div>
+                <form onsubmit="handlePasswordRoomSubmit(event)">
+                    <p class="modal-desc">비밀방에 입장하려면 비밀번호를 입력해주세요.</p>
+                    <div class="input-group">
+                        <input type="password" id="join-room-password" required placeholder="비밀번호" maxlength="10" autofocus>
+                    </div>
+                    <input type="hidden" id="join-room-id">
+                    <button type="submit" class="btn btn-primary btn-block">확인</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 게임 오버 / 클리어 오버레이 -->
+        <div id="game-overlay" class="game-overlay-screen hidden">
+            <div class="overlay-card glassmorphism animate-pop-in">
+                <div class="cat-animation-wrapper">
+                    <!-- CSS 애니메이션으로 구현된 씰룩씰룩 춤추는 고양이 -->
+                    <div class="dancing-cat">
+                        <div class="cat-ears">
+                            <span class="ear left"></span>
+                            <span class="ear right"></span>
+                        </div>
+                        <div class="cat-face">
+                            <div class="cat-eyes">
+                                <span class="eye left">^</span>
+                                <span class="eye right">^</span>
+                            </div>
+                            <div class="cat-nose">w</div>
+                        </div>
+                        <div class="cat-body"></div>
+                        <div class="cat-tail"></div>
+                    </div>
+                </div>
+                <h2 id="overlay-title" class="overlay-title">STAGE CLEAR!</h2>
+                <p id="overlay-subtitle" class="overlay-subtitle">야옹! 훌륭한 솜씨다옹!</p>
+                
+                <div class="overlay-stats">
+                    <div class="overlay-stat">
+                        <span class="stat-lbl">최종 점수</span>
+                        <span id="overlay-score" class="stat-val">0</span>
+                    </div>
+                    <div class="overlay-stat">
+                        <span class="stat-lbl">지운 줄 수</span>
+                        <span id="overlay-lines" class="stat-val">0</span>
+                    </div>
+                </div>
+                
+                <div class="overlay-actions">
+                    <button type="button" id="overlay-btn-restart" class="btn btn-primary" onclick="restartCurrentGame()">
+                        <i data-lucide="rotate-ccw"></i> 다시 시작
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="exitToLobby()">
+                        <i data-lucide="home"></i> 로비로 가기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 오디오 활성화 안내 및 음소거 조작 -->
+    <div id="audio-toggle" class="audio-control-floater" onclick="toggleAudioMute()" title="음향 온/오프">
+        <i id="audio-icon" data-lucide="volume-2"></i>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
