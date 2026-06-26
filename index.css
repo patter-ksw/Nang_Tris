@@ -1345,7 +1345,7 @@ body {
 
 /* 공중제비(somersault) 애니메이션 */
 .dancing-cat.somersault {
-    animation: catFlip 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    animation: catFlip 1.2s infinite cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 @keyframes catFlip {

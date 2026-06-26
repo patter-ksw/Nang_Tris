@@ -19,6 +19,8 @@ let audioCtx = null;
 let isMuted = false;
 let bgmTimer = null;
 let currentBgmStep = 0;
+let lobbyBgmTimer = null;
+let currentLobbyBgmStep = 0;
 let masterGain = null;
 let noiseBuffer = null;
 let delayNode = null;
@@ -29,7 +31,7 @@ let lastMelFreq = 0;
 // 32스텝 루프, 각 스텝은 8분음표 기준
 const STAGE_BGM = {
     1: { // 1스테이지: 밝고 귀여운 아기 고양이 테마 (C Major, 신나는 8비트 스퀘어 리드)
-        tempo: 130,
+        tempo: 110,
         synthType: 'square',
         melody: [
             523.25, 0, 659.25, 0, 783.99, 0, 880.00, 0,
@@ -50,7 +52,7 @@ const STAGE_BGM = {
         }
     },
     2: { // 2스테이지: 따뜻하고 재지한 식빵 굽는 고양이 테마 (F Pentatonic, 부드러운 하모니 리드)
-        tempo: 108,
+        tempo: 130,
         synthType: 'triangle-harmony',
         melody: [
             349.23, 0, 440.00, 0, 523.25, 523.25, 587.33, 0,
@@ -71,7 +73,7 @@ const STAGE_BGM = {
         }
     },
     3: { // 3스테이지: 긴장감 넘치는 사냥 나선 고양이 테마 (A Minor, 와와 필터 스윕 톱니파 리드)
-        tempo: 148,
+        tempo: 150,
         synthType: 'sawtooth-sweep',
         melody: [
             440.00, 493.88, 523.25, 0, 587.33, 659.25, 698.46, 0,
@@ -92,7 +94,7 @@ const STAGE_BGM = {
         }
     },
     4: { // 4스테이지: 몽환적이고 스페이시한 우주 고양이 테마 (C Lydian Arpeggio, 딜레이 사인파 글라이딩 리드)
-        tempo: 96,
+        tempo: 170,
         synthType: 'space-glide',
         melody: [
             523.25, 659.25, 783.99, 987.77, 1174.66, 987.77, 783.99, 659.25,
@@ -111,6 +113,29 @@ const STAGE_BGM = {
             snare: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
             hihat: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
         }
+    }
+};
+
+// 웰컴 로비 전용 BGM: 경쾌하고 신나는 8비트 비트 (C Major)
+const LOBBY_BGM = {
+    tempo: 124,
+    synthType: 'square',
+    melody: [
+        523.25, 0, 587.33, 0, 659.25, 0, 523.25, 0,
+        659.25, 0, 698.46, 0, 783.99, 0, 0, 0,
+        783.99, 880.00, 783.99, 698.46, 659.25, 0, 523.25, 0,
+        587.33, 0, 392.00, 0, 523.25, 0, 0, 0
+    ],
+    bass: [
+        130.81, 0, 130.81, 0, 164.81, 0, 164.81, 0,
+        174.61, 0, 174.61, 0, 196.00, 0, 196.00, 0,
+        196.00, 0, 196.00, 0, 130.81, 0, 130.81, 0,
+        146.83, 0, 98.00, 0, 130.81, 0, 130.81, 0
+    ],
+    drums: {
+        kick:  [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        snare: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+        hihat: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     }
 };
 
@@ -227,6 +252,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 키보드 리스너 등록
     document.addEventListener('keydown', handleKeyDown);
+
+    // 첫 사용자 상호작용시 로비 BGM 시작 시도
+    const startAudioOnInteraction = () => {
+        if (currentActiveSection === 'auth-section' || currentActiveSection === 'lobby-section') {
+            startLobbyBGM();
+        }
+        document.removeEventListener('click', startAudioOnInteraction);
+        document.removeEventListener('keydown', startAudioOnInteraction);
+        document.removeEventListener('touchstart', startAudioOnInteraction);
+    };
+    document.addEventListener('click', startAudioOnInteraction);
+    document.addEventListener('keydown', startAudioOnInteraction);
+    document.addEventListener('touchstart', startAudioOnInteraction);
 });
 
 // 섹션 전환 유틸리티
@@ -238,6 +276,14 @@ function showSection(sectionId) {
     if (target) {
         target.classList.remove('hidden');
         currentActiveSection = sectionId;
+    }
+    
+    // 섹션 전환에 따른 BGM 상태 제어
+    if (sectionId === 'auth-section' || sectionId === 'lobby-section') {
+        stopBGM();
+        startLobbyBGM();
+    } else if (sectionId === 'game-section') {
+        stopLobbyBGM();
     }
 }
 
@@ -778,10 +824,13 @@ function toggleAudioMute() {
     if (isMuted) {
         icon.setAttribute('data-lucide', 'volume-x');
         stopBGM();
+        stopLobbyBGM();
     } else {
         icon.setAttribute('data-lucide', 'volume-2');
         if (isGameRunning && !isGamePaused) {
             startBGM();
+        } else if (currentActiveSection === 'auth-section' || currentActiveSection === 'lobby-section') {
+            startLobbyBGM();
         }
     }
     lucide.createIcons();
@@ -922,7 +971,11 @@ function startBGM() {
             const currentStageNum = isMultiplayMode ? 1 : (((gameStateSelf.stage - 1) % 4) + 1);
             const track = STAGE_BGM[currentStageNum];
             
-            const stepDuration = 60 / track.tempo / 2; // 8분음표 간격 (초 단위)
+            // 스테이지에 따라 갈수록 템포가 빨라지도록 동적 계산 (최대 240 bpm 제한)
+            let dynamicTempo = 110 + (gameStateSelf.stage - 1) * 15;
+            if (dynamicTempo > 240) dynamicTempo = 240;
+            
+            const stepDuration = 60 / dynamicTempo / 2; // 8분음표 간격 (초 단위)
             const now = audioCtx.currentTime;
             
             // 1. 드럼 파트 (Kick, Snare, Hihat 순차 재생)
@@ -1107,6 +1160,93 @@ function stopBGM() {
         bgmTimer = null;
     }
     lastMelFreq = 0; // 글라이드 리셋
+}
+
+function startLobbyBGM() {
+    if (isMuted) return;
+    try {
+        initAudio();
+        if (lobbyBgmTimer) return;
+        
+        function playNextLobbyStep() {
+            if (isMuted || !audioCtx || (currentActiveSection !== 'auth-section' && currentActiveSection !== 'lobby-section')) {
+                stopLobbyBGM();
+                return;
+            }
+            
+            const track = LOBBY_BGM;
+            const stepDuration = 60 / track.tempo / 2; // 8분음표 간격 (초 단위)
+            const now = audioCtx.currentTime;
+            
+            // 1. 드럼 파트
+            if (track.drums) {
+                if (track.drums.kick && track.drums.kick[currentLobbyBgmStep] === 1) {
+                    playKick(now);
+                }
+                if (track.drums.snare && track.drums.snare[currentLobbyBgmStep] === 1) {
+                    playSnare(now);
+                }
+                if (track.drums.hihat && track.drums.hihat[currentLobbyBgmStep] === 1) {
+                    playHihat(now);
+                }
+            }
+            
+            // 2. 멜로디 파트
+            const melFreq = track.melody[currentLobbyBgmStep];
+            if (melFreq > 0) {
+                const oscMel = audioCtx.createOscillator();
+                const gainMel = audioCtx.createGain();
+                
+                oscMel.type = 'square';
+                oscMel.frequency.setValueAtTime(melFreq, now);
+                
+                gainMel.gain.setValueAtTime(0, now);
+                gainMel.gain.linearRampToValueAtTime(0.04, now + 0.01);
+                gainMel.gain.exponentialRampToValueAtTime(0.001, now + stepDuration - 0.015);
+                
+                oscMel.connect(gainMel);
+                gainMel.connect(masterGain || audioCtx.destination);
+                if (delayNode) gainMel.connect(delayNode);
+                
+                oscMel.start(now);
+                oscMel.stop(now + stepDuration);
+            }
+            
+            // 3. 베이스 파트
+            const bassFreq = track.bass[currentLobbyBgmStep];
+            if (bassFreq > 0) {
+                const oscBass = audioCtx.createOscillator();
+                const gainBass = audioCtx.createGain();
+                
+                oscBass.type = 'triangle';
+                oscBass.frequency.setValueAtTime(bassFreq, now);
+                
+                oscBass.connect(gainBass);
+                gainBass.gain.setValueAtTime(0, now);
+                gainBass.gain.linearRampToValueAtTime(0.04, now + 0.02);
+                gainBass.gain.exponentialRampToValueAtTime(0.001, now + stepDuration - 0.02);
+                
+                gainBass.connect(masterGain || audioCtx.destination);
+                
+                oscBass.start(now);
+                oscBass.stop(now + stepDuration);
+            }
+            
+            currentLobbyBgmStep = (currentLobbyBgmStep + 1) % track.melody.length;
+            lobbyBgmTimer = setTimeout(playNextLobbyStep, stepDuration * 1000);
+        }
+        
+        playNextLobbyStep();
+    } catch (e) {
+        console.error("Lobby BGM error:", e);
+    }
+}
+
+function stopLobbyBGM() {
+    if (lobbyBgmTimer) {
+        clearTimeout(lobbyBgmTimer);
+        lobbyBgmTimer = null;
+    }
 }
 
 // --- 8. 테트리스 코어 게임 로직 ---
@@ -1917,6 +2057,20 @@ async function handleGameOver() {
         await uploadHighScore('single', gameStateSelf.score);
     }
     
+    // 게임 오버레이 고양이 눈을 우는 눈(ㅠ)으로 변경하고 슬픈 애니메이션 클래스 주입
+    const leftEye = document.querySelector('#game-overlay .dancing-cat .eye.left');
+    const rightEye = document.querySelector('#game-overlay .dancing-cat .eye.right');
+    if (leftEye && rightEye) {
+        leftEye.textContent = "ㅠ";
+        rightEye.textContent = "ㅠ";
+    }
+    const cat = document.querySelector('#game-overlay .dancing-cat');
+    if (cat) {
+        cat.classList.remove('somersault', 'sad');
+        void cat.offsetWidth; // Reflow 트리거
+        cat.classList.add('sad');
+    }
+
     // overlay-btn-restart 복원
     const restartBtn = document.getElementById('overlay-btn-restart');
     restartBtn.innerHTML = `<i data-lucide="rotate-ccw"></i> 다시 시작`;
@@ -1946,16 +2100,16 @@ function triggerStageClear() {
     document.getElementById('overlay-score').textContent = gameStateSelf.score;
     document.getElementById('overlay-lines').textContent = gameStateSelf.lines;
     
-    // 눈 모양을 신나는 눈(^)으로 복원
-    const leftEye = document.querySelector('.dancing-cat .eye.left');
-    const rightEye = document.querySelector('.dancing-cat .eye.right');
+    // 게임 오버레이 고양이 눈 모양을 신나는 눈(^)으로 복원
+    const leftEye = document.querySelector('#game-overlay .dancing-cat .eye.left');
+    const rightEye = document.querySelector('#game-overlay .dancing-cat .eye.right');
     if (leftEye && rightEye) {
         leftEye.textContent = "^";
         rightEye.textContent = "^";
     }
     
-    // 고양이 공중제비 애니메이션 트리거
-    const cat = document.querySelector('.dancing-cat');
+    // 게임 오버레이 고양이 공중제비 애니메이션 트리거
+    const cat = document.querySelector('#game-overlay .dancing-cat');
     if (cat) {
         cat.classList.remove('somersault', 'sad');
         void cat.offsetWidth; // Reflow 트리거
@@ -1976,13 +2130,13 @@ function triggerStageClear() {
 function startNextStage() {
     document.getElementById('game-overlay').classList.add('hidden');
     
-    // 애니메이션 및 눈 복원
-    const cat = document.querySelector('.dancing-cat');
+    // 애니메이션 및 눈 복원 (게임 오버레이 기준)
+    const cat = document.querySelector('#game-overlay .dancing-cat');
     if (cat) {
         cat.classList.remove('somersault', 'sad');
     }
-    const leftEye = document.querySelector('.dancing-cat .eye.left');
-    const rightEye = document.querySelector('.dancing-cat .eye.right');
+    const leftEye = document.querySelector('#game-overlay .dancing-cat .eye.left');
+    const rightEye = document.querySelector('#game-overlay .dancing-cat .eye.right');
     if (leftEye && rightEye) {
         leftEye.textContent = "^";
         rightEye.textContent = "^";
@@ -2021,35 +2175,59 @@ function playStageClearFanfare() {
         initAudio();
         const now = audioCtx.currentTime;
         
-        // 8비트 풍의 C5 -> E5 -> G5 -> C6 도약 멜로디
-        const notes = [523.25, 659.25, 783.99, 1046.50];
+        // 8비트 풍의 신나는 C Major 아르페지오 & 스케일 팡파레 (8음 구성)
+        const notes = [
+            523.25,  // C5
+            659.25,  // E5
+            783.99,  // G5
+            1046.50, // C6
+            880.00,  // A5
+            987.77,  // B5
+            1046.50, // C6
+            1318.51  // E6
+        ];
+        
+        const noteDuration = 0.12;
         
         notes.forEach((freq, idx) => {
             const osc = audioCtx.createOscillator();
-            const oscHarm = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
-            // 패미컴 스타일 스퀘어 리드
             osc.type = 'square';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+            osc.frequency.setValueAtTime(freq, now + idx * noteDuration);
             
-            // 장3도 화음 추가하여 따뜻하고 풍성한 팬페어 연출
-            oscHarm.type = 'triangle';
-            oscHarm.frequency.setValueAtTime(freq * 1.25, now + idx * 0.12);
-            
-            gainNode.gain.setValueAtTime(0, now + idx * 0.12);
-            gainNode.gain.linearRampToValueAtTime(0.08, now + idx * 0.12 + 0.03);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.35);
+            gainNode.gain.setValueAtTime(0, now + idx * noteDuration);
+            gainNode.gain.linearRampToValueAtTime(0.06, now + idx * noteDuration + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + idx * noteDuration + noteDuration * 1.5);
             
             osc.connect(gainNode);
-            oscHarm.connect(gainNode);
             gainNode.connect(masterGain || audioCtx.destination);
             if (delayNode) gainNode.connect(delayNode);
             
-            osc.start(now + idx * 0.12);
-            oscHarm.start(now + idx * 0.12);
-            osc.stop(now + idx * 0.12 + 0.35);
-            oscHarm.stop(now + idx * 0.12 + 0.35);
+            osc.start(now + idx * noteDuration);
+            osc.stop(now + idx * noteDuration + noteDuration * 1.5);
+        });
+        
+        // 피날레 파워 화음 (C6, E6, G6)
+        const finaleStart = now + notes.length * noteDuration;
+        const finaleNotes = [1046.50, 1318.51, 1567.98];
+        finaleNotes.forEach((freq, fIdx) => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = fIdx === 2 ? 'square' : 'triangle';
+            osc.frequency.setValueAtTime(freq, finaleStart);
+            
+            gainNode.gain.setValueAtTime(0, finaleStart);
+            gainNode.gain.linearRampToValueAtTime(0.05, finaleStart + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, finaleStart + 1.2);
+            
+            osc.connect(gainNode);
+            gainNode.connect(masterGain || audioCtx.destination);
+            if (delayNode) gainNode.connect(delayNode);
+            
+            osc.start(finaleStart);
+            osc.stop(finaleStart + 1.2);
         });
     } catch (e) {
         console.error("Fanfare audio error:", e);
@@ -2063,43 +2241,62 @@ function playGameOverSound() {
         initAudio();
         const now = audioCtx.currentTime;
         
-        const failNotes = [196.00, 174.61, 155.56, 130.81]; // 슬픈 단조 음계 하행
-        const durations = [0.18, 0.18, 0.18, 0.5];
+        // 침울하고 슬픈 단조 멜로디 하행 (8스텝)
+        const notes = [
+            261.63, // C4
+            311.13, // Eb4
+            392.00, // G4
+            349.23, // F4
+            311.13, // Eb4
+            293.66, // D4
+            261.63, // C4
+            196.00  // G3 (축 쳐지는 느낌)
+        ];
         
-        let timeOffset = 0;
-        failNotes.forEach((freq, idx) => {
+        const noteDuration = 0.25; // 느린 단조 템포
+        
+        notes.forEach((freq, idx) => {
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
             osc.type = 'sawtooth';
             
-            // 먹먹한 음색을 위해 로우패스 필터 사용
             const filter = audioCtx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(420, now + timeOffset);
+            filter.frequency.setValueAtTime(350, now + idx * noteDuration);
             
-            const startT = now + timeOffset;
-            const dur = durations[idx];
-            
-            osc.frequency.setValueAtTime(freq, startT);
-            if (idx === 3) {
-                // 마지막 음은 축 처지며 주파수가 내려가는 효과 (실망감 연출)
-                osc.frequency.exponentialRampToValueAtTime(75, startT + dur);
+            osc.frequency.setValueAtTime(freq, now + idx * noteDuration);
+            if (idx === notes.length - 1) {
+                osc.frequency.exponentialRampToValueAtTime(80, now + idx * noteDuration + 0.6);
             }
             
-            gainNode.gain.setValueAtTime(0, startT);
-            gainNode.gain.linearRampToValueAtTime(0.08, startT + 0.02);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startT + dur);
+            gainNode.gain.setValueAtTime(0, now + idx * noteDuration);
+            gainNode.gain.linearRampToValueAtTime(0.06, now + idx * noteDuration + 0.03);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + idx * noteDuration + (idx === notes.length - 1 ? 0.8 : 0.35));
             
             osc.connect(filter);
             filter.connect(gainNode);
             gainNode.connect(masterGain || audioCtx.destination);
             
-            osc.start(startT);
-            osc.stop(startT + dur);
-            
-            timeOffset += dur - 0.02; // 음 간의 자연스러운 오버랩
+            osc.start(now + idx * noteDuration);
+            osc.stop(now + idx * noteDuration + (idx === notes.length - 1 ? 0.8 : 0.35));
         });
+        
+        // 배경에 깔리는 슬프고 무거운 지속음 (C2 저음)
+        const bassOsc = audioCtx.createOscillator();
+        const bassGain = audioCtx.createGain();
+        bassOsc.type = 'sine';
+        bassOsc.frequency.setValueAtTime(65.41, now);
+        
+        bassGain.gain.setValueAtTime(0, now);
+        bassGain.gain.linearRampToValueAtTime(0.08, now + 0.1);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + notes.length * noteDuration + 0.5);
+        
+        bassOsc.connect(bassGain);
+        bassGain.connect(masterGain || audioCtx.destination);
+        
+        bassOsc.start(now);
+        bassOsc.stop(now + notes.length * noteDuration + 0.5);
     } catch (e) {
         console.error("GameOver audio error:", e);
     }
@@ -2592,13 +2789,13 @@ function resumeGameAfterStageClear() {
 function restartCurrentGame() {
     document.getElementById('game-overlay').classList.add('hidden');
     
-    // 고양이 애니메이션 및 눈 상태 복원
-    const cat = document.querySelector('.dancing-cat');
+    // 고양이 애니메이션 및 눈 상태 복원 (게임 오버레이 기준)
+    const cat = document.querySelector('#game-overlay .dancing-cat');
     if (cat) {
         cat.classList.remove('somersault', 'sad');
     }
-    const leftEye = document.querySelector('.dancing-cat .eye.left');
-    const rightEye = document.querySelector('.dancing-cat .eye.right');
+    const leftEye = document.querySelector('#game-overlay .dancing-cat .eye.left');
+    const rightEye = document.querySelector('#game-overlay .dancing-cat .eye.right');
     if (leftEye && rightEye) {
         leftEye.textContent = "^";
         rightEye.textContent = "^";
