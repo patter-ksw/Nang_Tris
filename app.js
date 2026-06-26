@@ -2048,6 +2048,11 @@ async function handleGameOver() {
         
         // 멀티 최고 스코어 랭킹업 로드
         await uploadHighScore('multi', gameStateSelf.score);
+        
+        // 방장(호스트)인 경우 게임 종료 시 대기방 DB 삭제 (로비 리스트에서 즉시 제거)
+        if (isHost && supabaseClient && activeRoomId) {
+            supabaseClient.from('tr_rooms').delete().eq('id', activeRoomId).then();
+        }
     } else {
         title.textContent = "GAME OVER";
         title.style.color = "#ff8da1";
@@ -2075,7 +2080,11 @@ async function handleGameOver() {
     const restartBtn = document.getElementById('overlay-btn-restart');
     restartBtn.innerHTML = `<i data-lucide="rotate-ccw"></i> 다시 시작`;
     restartBtn.onclick = restartCurrentGame;
-    restartBtn.classList.remove('hidden');
+    if (isMultiplayMode) {
+        restartBtn.classList.add('hidden'); // 멀티플레이 대기방은 삭제되었으므로 다시시작 숨김
+    } else {
+        restartBtn.classList.remove('hidden');
+    }
     lucide.createIcons();
     
     document.getElementById('game-overlay').classList.remove('hidden');
@@ -2569,6 +2578,17 @@ function handleOpponentLoss() {
     // 멀티 보드 결과 오버레이 표시 (나: 승리, 상대: 패배)
     showBoardResult('self', true);
     showBoardResult('opp', false);
+    
+    // 방장(호스트)인 경우 게임 종료 시 대기방 DB 삭제 (로비 리스트에서 즉시 제거)
+    if (isHost && supabaseClient && activeRoomId) {
+        supabaseClient.from('tr_rooms').delete().eq('id', activeRoomId).then();
+    }
+    
+    // 다시 시작 버튼 숨김 (멀티플레이 종료 시 로비 이동 유도)
+    const restartBtn = document.getElementById('overlay-btn-restart');
+    if (restartBtn) {
+        restartBtn.classList.add('hidden');
+    }
     
     document.getElementById('game-overlay').classList.remove('hidden');
     
