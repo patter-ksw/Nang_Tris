@@ -35,7 +35,7 @@ const bgmNotes = [
 // --- 2. 테트리스 게임 룰 & 데이터 정의 ---
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
-const BLOCK_SIZE = 30; // 30px per cell
+const BLOCK_SIZE = 25; // 25px per cell (화면 높이 맞춤)
 
 // 테트리미노 블록 형상 (SRS 규격 기준 중심축 포함)
 const MINOS = {
@@ -763,163 +763,341 @@ function clearCanvas(canvas, ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// 미노 한 칸(고양이 캐릭터) 그리기
-function drawCatCell(ctx, x, y, size, type) {
+// 미노의 개별 파트(고양이 캐릭터 부위) 그리기
+function drawCatCellPart(ctx, x, y, size, type, part, isGhost = false) {
     ctx.save();
+    if (isGhost) {
+        ctx.globalAlpha = 0.3; // 고스트 블록은 투명하게 처리
+    }
     
-    let primaryColor, secondaryColor, faceType;
+    let primaryColor, secondaryColor;
     switch(type) {
-        case 'I': primaryColor = '#60a5fa'; secondaryColor = '#3b82f6'; faceType = 'slender'; break;
-        case 'O': primaryColor = '#fbbf24'; secondaryColor = '#d97706'; faceType = 'chubby'; break;
-        case 'T': primaryColor = '#c084fc'; secondaryColor = '#9333ea'; faceType = 'sleeping'; break;
-        case 'S': primaryColor = '#34d399'; secondaryColor = '#059669'; faceType = 'playful'; break;
-        case 'Z': primaryColor = '#f87171'; secondaryColor = '#dc2626'; faceType = 'angry'; break;
-        case 'J': primaryColor = '#a78bfa'; secondaryColor = '#7c3aed'; faceType = 'wink'; break;
-        case 'L': primaryColor = '#fb923c'; secondaryColor = '#ea580c'; faceType = 'happy'; break;
-        case 'G': primaryColor = '#9ca3af'; secondaryColor = '#4b5563'; faceType = 'stone'; break; // 장애물
-        default: primaryColor = '#ff8da1'; secondaryColor = '#ff728c'; faceType = 'default';
+        case 'I': primaryColor = '#60a5fa'; secondaryColor = '#2563eb'; break; // 날씬한 파란 고양이
+        case 'O': primaryColor = '#fbbf24'; secondaryColor = '#d97706'; break; // 뚱뚱한 노란 고양이
+        case 'T': primaryColor = '#c084fc'; secondaryColor = '#7c3aed'; break; // 졸린 보라 고양이
+        case 'S': primaryColor = '#34d399'; secondaryColor = '#059669'; break; // 장난치는 초록 고양이
+        case 'Z': primaryColor = '#f87171'; secondaryColor = '#dc2626'; break; // 화난 빨간 고양이
+        case 'J': primaryColor = '#a78bfa'; secondaryColor = '#6d28d9'; break; // 윙크하는 연보라 고양이
+        case 'L': primaryColor = '#fb923c'; secondaryColor = '#ea580c'; break; // 행복한 주황 고양이
+        case 'G': primaryColor = '#9ca3af'; secondaryColor = '#4b5563'; break; // 돌 고양이 (장애물)
+        default: primaryColor = '#ff8da1'; secondaryColor = '#e11d48';
     }
 
-    // 1. 몸체 (부드러운 사각형)
+    // 1. 블록 기본 몸체 그리기 (둥글둥글한 사각형)
     ctx.fillStyle = primaryColor;
     ctx.strokeStyle = secondaryColor;
     ctx.lineWidth = 1.5;
     
-    const r = 6; // 라운딩
     ctx.beginPath();
-    ctx.roundRect(x + 1.5, y + 1.5, size - 3, size - 3, r);
+    ctx.roundRect(x + 1, y + 1, size - 2, size - 2, 5);
     ctx.fill();
     ctx.stroke();
-    
-    // 2. 고양이 귀 그리기
-    ctx.fillStyle = primaryColor;
-    // Left ear
-    ctx.beginPath();
-    ctx.moveTo(x + 3, y + 5);
-    ctx.lineTo(x + 9, y + 1);
-    ctx.lineTo(x + 11, y + 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    
-    // Right ear
-    ctx.beginPath();
-    ctx.moveTo(x + size - 3, y + 5);
-    ctx.lineTo(x + size - 9, y + 1);
-    ctx.lineTo(x + size - 11, y + 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    
-    // 귓속 핑크 포인트
-    ctx.fillStyle = '#ffb7c5';
-    ctx.beginPath();
-    ctx.moveTo(x + 4.5, y + 4.5);
-    ctx.lineTo(x + 7.5, y + 2);
-    ctx.lineTo(x + 9, y + 5);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.moveTo(x + size - 4.5, y + 4.5);
-    ctx.lineTo(x + size - 7.5, y + 2);
-    ctx.lineTo(x + size - 9, y + 5);
-    ctx.closePath();
-    ctx.fill();
 
-    // 3. 고양이 얼굴 데코
-    ctx.fillStyle = '#120e24';
-    ctx.strokeStyle = '#120e24';
-    ctx.lineWidth = 1.2;
-    
-    const cx = x + size/2;
-    const cy = y + size/2 + 1;
-    
-    if (faceType === 'sleeping') {
-        // 감은 눈 (곡선)
+    const cx = x + size / 2;
+    const cy = y + size / 2;
+
+    if (part === 'head') {
+        // --- 1. 머리 블록: 귀, 깨어있는 귀여운 얼굴, 수염 ---
+        ctx.fillStyle = primaryColor;
+        // 왼쪽 귀
         ctx.beginPath();
-        ctx.arc(cx - 4, cy - 2, 2, 0, Math.PI, true);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(cx + 4, cy - 2, 2, 0, Math.PI, true);
-        ctx.stroke();
-    } else if (faceType === 'wink') {
-        // 한쪽 감음
-        ctx.beginPath();
-        ctx.arc(cx - 4, cy - 2, 1.5, 0, Math.PI * 2);
+        ctx.moveTo(x + 2, y + 4);
+        ctx.lineTo(x + 7, y + 0.5);
+        ctx.lineTo(x + 9, y + 5);
+        ctx.closePath();
         ctx.fill();
+        ctx.stroke();
+        // 오른쪽 귀
+        ctx.beginPath();
+        ctx.moveTo(x + size - 2, y + 4);
+        ctx.lineTo(x + size - 7, y + 0.5);
+        ctx.lineTo(x + size - 9, y + 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 귀 안쪽 분홍 젤리 포인트
+        ctx.fillStyle = '#ffb7c5';
+        ctx.beginPath();
+        ctx.moveTo(x + 3.5, y + 3.5);
+        ctx.lineTo(x + 6, y + 1.5);
+        ctx.lineTo(x + 7.5, y + 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x + size - 3.5, y + 3.5);
+        ctx.lineTo(x + size - 6, y + 1.5);
+        ctx.lineTo(x + size - 7.5, y + 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // 얼굴 요소 드로잉
+        ctx.fillStyle = '#120e24';
+        ctx.strokeStyle = '#120e24';
+        
+        // 동그랗고 귀여운 눈
+        ctx.beginPath();
+        ctx.arc(cx - 3.5, cy - 1.5, 1.8, 0, Math.PI * 2);
+        ctx.arc(cx + 3.5, cy - 1.5, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 핑크 코 & w 입 모양
+        ctx.strokeStyle = '#120e24';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx - 1.2, cy + 1, 1.2, Math.PI, 0, true);
+        ctx.arc(cx + 1.2, cy + 1, 1.2, Math.PI, 0, true);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff9ebe';
+        ctx.beginPath();
+        ctx.moveTo(cx - 1, cy - 0.8);
+        ctx.lineTo(cx + 1, cy - 0.8);
+        ctx.lineTo(cx, cy + 0.2);
+        ctx.closePath();
+        ctx.fill();
+
+        // 볼 터치
+        ctx.fillStyle = 'rgba(255, 141, 161, 0.4)';
+        ctx.beginPath();
+        ctx.arc(cx - 5.5, cy + 1, 1.5, 0, Math.PI * 2);
+        ctx.arc(cx + 5.5, cy + 1, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 수염
+        ctx.strokeStyle = 'rgba(18, 14, 36, 0.35)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(x + 2, cy); ctx.lineTo(x + 6, cy + 0.5);
+        ctx.moveTo(x + 2, cy + 2); ctx.lineTo(x + 5.5, cy + 1.2);
+        ctx.moveTo(x + size - 2, cy); ctx.lineTo(x + size - 6, cy + 0.5);
+        ctx.moveTo(x + size - 2, cy + 2); ctx.lineTo(x + size - 5.5, cy + 1.2);
+        ctx.stroke();
+
+    } else if (part === 'tail') {
+        // --- 2. 꼬리 블록: 위로 말려 올라간 꼬리와 몸통 줄무늬 ---
+        ctx.strokeStyle = secondaryColor;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
         
         ctx.beginPath();
-        ctx.moveTo(cx + 2, cy - 3);
-        ctx.lineTo(cx + 6, cy - 1);
-        ctx.moveTo(cx + 2, cy - 1);
-        ctx.lineTo(cx + 6, cy - 3);
+        ctx.moveTo(cx - 1, cy + 2);
+        ctx.bezierCurveTo(cx - 5, cy - 6, cx + 6, cy - 10, cx + 4, cy - 14);
         ctx.stroke();
-    } else if (faceType === 'angry') {
-        // 치켜뜬 눈
+
+        ctx.fillStyle = primaryColor;
         ctx.beginPath();
-        ctx.moveTo(cx - 5.5, cy - 3.5);
-        ctx.lineTo(cx - 2, cy - 1.5);
-        ctx.moveTo(cx + 5.5, cy - 3.5);
-        ctx.lineTo(cx + 2, cy - 1.5);
+        ctx.arc(cx + 4, cy - 14, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 몸통 줄무늬
+        ctx.strokeStyle = 'rgba(18, 14, 36, 0.15)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x + 3, cy - 2); ctx.lineTo(x + 7, cy + 2);
+        ctx.moveTo(x + 4, cy + 2); ctx.lineTo(x + 8, cy + 6);
         ctx.stroke();
+
+    } else if (part === 'body') {
+        // --- 3. 몸통 블록: 둥근 줄무늬 패턴 ---
+        ctx.strokeStyle = 'rgba(18, 14, 36, 0.15)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x + 3, cy - 3); ctx.lineTo(x + 8, cy + 2);
+        ctx.moveTo(x + size - 3, cy - 3); ctx.lineTo(x + size - 8, cy + 2);
+        ctx.stroke();
+
+    } else if (part === 'sleeping') {
+        // --- 4. 자는 고양이 (안착해서 고정된 블록 상태) ---
+        ctx.fillStyle = '#120e24';
+        ctx.strokeStyle = '#120e24';
+        ctx.lineWidth = 0.9;
         
+        // 눈 감고 자는 눈 모양 (^ ^ 또는 감은 호)
         ctx.beginPath();
-        ctx.arc(cx - 3, cy - 1.5, 1, 0, Math.PI*2);
-        ctx.arc(cx + 3, cy - 1.5, 1, 0, Math.PI*2);
-        ctx.fill();
-    } else if (faceType === 'stone') {
-        // 돌 고양이 눈
-        ctx.beginPath();
-        ctx.moveTo(cx - 5, cy - 2);
-        ctx.lineTo(cx - 1, cy - 2);
-        ctx.moveTo(cx + 1, cy - 2);
-        ctx.lineTo(cx + 5, cy - 2);
+        ctx.arc(cx - 3.5, cy - 1.5, 1.5, 0, Math.PI, true);
         ctx.stroke();
-    } else {
-        // 기본 둥글 눈
         ctx.beginPath();
-        ctx.arc(cx - 4, cy - 2, 1.5, 0, Math.PI * 2);
-        ctx.arc(cx + 4, cy - 2, 1.5, 0, Math.PI * 2);
+        ctx.arc(cx + 3.5, cy - 1.5, 1.5, 0, Math.PI, true);
+        ctx.stroke();
+
+        // 입 모양 (w)
+        ctx.beginPath();
+        ctx.arc(cx - 1.2, cy + 1, 1.2, Math.PI, 0, true);
+        ctx.arc(cx + 1.2, cy + 1, 1.2, Math.PI, 0, true);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff9ebe';
+        ctx.beginPath();
+        ctx.moveTo(cx - 1, cy - 0.8);
+        ctx.lineTo(cx + 1, cy - 0.8);
+        ctx.lineTo(cx, cy + 0.2);
+        ctx.closePath();
         ctx.fill();
+
+        // 수염
+        ctx.strokeStyle = 'rgba(18, 14, 36, 0.25)';
+        ctx.beginPath();
+        ctx.moveTo(x + 2, cy); ctx.lineTo(x + 6, cy + 0.5);
+        ctx.moveTo(x + size - 2, cy); ctx.lineTo(x + size - 6, cy + 0.5);
+        ctx.stroke();
+
+    } else if (part.startsWith('O_')) {
+        // --- 5. O-Mino 전용 2x2 뚱뚱한 고양이 특수 매핑 ---
+        const oType = part.split('_')[1];
+        ctx.fillStyle = '#120e24';
+        ctx.strokeStyle = '#120e24';
+
+        if (oType === 'tl') {
+            // 왼쪽 귀 & 왼쪽 눈
+            ctx.fillStyle = primaryColor;
+            ctx.strokeStyle = secondaryColor;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(x + 2, y + 4); ctx.lineTo(x + 7, y + 0.5); ctx.lineTo(x + 9, y + 5);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            
+            ctx.fillStyle = '#ffb7c5';
+            ctx.beginPath();
+            ctx.moveTo(x + 3.5, y + 3.5); ctx.lineTo(x + 6, y + 1.5); ctx.lineTo(x + 7.5, y + 4);
+            ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = '#120e24';
+            ctx.beginPath();
+            ctx.arc(cx + 2.5, cy + 1.5, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255, 141, 161, 0.4)';
+            ctx.beginPath();
+            ctx.arc(cx - 2, cy + 4.5, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+        } else if (oType === 'tr') {
+            // 오른쪽 귀 & 오른쪽 눈 & 코/입
+            ctx.fillStyle = primaryColor;
+            ctx.strokeStyle = secondaryColor;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(x + size - 2, y + 4); ctx.lineTo(x + size - 7, y + 0.5); ctx.lineTo(x + size - 9, y + 5);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            
+            ctx.fillStyle = '#ffb7c5';
+            ctx.beginPath();
+            ctx.moveTo(x + size - 3.5, y + 3.5); ctx.lineTo(x + size - 6, y + 1.5); ctx.lineTo(x + size - 7.5, y + 4);
+            ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = '#120e24';
+            ctx.beginPath();
+            ctx.arc(cx - 2.5, cy + 1.5, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255, 141, 161, 0.4)';
+            ctx.beginPath();
+            ctx.arc(cx + 2, cy + 4.5, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 코와 입을 2x2 경계면(왼쪽 아래 구석) 부근에 그립니다.
+            ctx.strokeStyle = '#120e24';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(x - 1, y + size - 1, 1.5, Math.PI, 0, true);
+            ctx.arc(x + 1, y + size - 1, 1.5, Math.PI, 0, true);
+            ctx.stroke();
+
+            ctx.fillStyle = '#ff9ebe';
+            ctx.beginPath();
+            ctx.moveTo(x - 1, y + size - 2.5);
+            ctx.lineTo(x + 1, y + size - 2.5);
+            ctx.lineTo(x, y + size - 1.5);
+            ctx.closePath();
+            ctx.fill();
+
+        } else if (oType === 'bl') {
+            // 귀여운 왼쪽 흰 양말 발
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = secondaryColor;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(x + 7, y + size - 2.5, 4, 0, Math.PI, true);
+            ctx.fill();
+            ctx.stroke();
+
+        } else if (oType === 'br') {
+            // 오른쪽 양말 발 & wiggling 꼬리
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = secondaryColor;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(x + size - 7, y + size - 2.5, 4, 0, Math.PI, true);
+            ctx.fill();
+            ctx.stroke();
+
+            // 뚱뚱이 꼬리
+            ctx.strokeStyle = secondaryColor;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x + size - 2, cy);
+            ctx.bezierCurveTo(x + size + 5, cy - 3, x + size + 7, cy - 8, x + size + 3, cy - 12);
+            ctx.stroke();
+        }
     }
-    
-    // 입 모양 (w)
-    ctx.strokeStyle = '#120e24';
-    ctx.beginPath();
-    ctx.arc(cx - 1.5, cy + 1, 1.5, Math.PI, 0, true);
-    ctx.arc(cx + 1.5, cy + 1, 1.5, Math.PI, 0, true);
-    ctx.stroke();
-    
-    // 작은 핑크 코
-    ctx.fillStyle = '#ff9ebe';
-    ctx.beginPath();
-    ctx.moveTo(cx - 1, cy - 1);
-    ctx.lineTo(cx + 1, cy - 1);
-    ctx.lineTo(cx, cy + 0.2);
-    ctx.closePath();
-    ctx.fill();
-    
-    // 수염 그리기
-    ctx.strokeStyle = 'rgba(18, 14, 36, 0.35)';
-    ctx.lineWidth = 0.8;
-    // 좌수염
-    ctx.beginPath();
-    ctx.moveTo(x + 4, cy);
-    ctx.lineTo(x + 9, cy + 0.5);
-    ctx.moveTo(x + 4, cy + 2.5);
-    ctx.lineTo(x + 8.5, cy + 1.5);
-    // 우수염
-    ctx.moveTo(x + size - 4, cy);
-    ctx.lineTo(x + size - 9, cy + 0.5);
-    ctx.moveTo(x + size - 4, cy + 2.5);
-    ctx.lineTo(x + size - 8.5, cy + 1.5);
-    ctx.stroke();
-    
+
     ctx.restore();
 }
 
-// 미노 형상 행렬 그리기 (Hold/Next 및 떨어지는 블록 렌더링용)
+// 레거시 지원용 래퍼 함수 ( landed 블록 렌더링용 )
+function drawCatCell(ctx, x, y, size, type) {
+    drawCatCellPart(ctx, x, y, size, type, 'sleeping');
+}
+
+// 활성 상태의 전체 미노를 하나의 온전한 고양이 형상으로 렌더링
+function drawCoherentCatPiece(ctx, startX, startY, matrix, type, size, isGhost = false) {
+    const cells = [];
+    for (let y = 0; y < matrix.length; y++) {
+        for (let x = 0; x < matrix[y].length; x++) {
+            if (matrix[y][x]) {
+                cells.push({ x, y });
+            }
+        }
+    }
+    if (cells.length === 0) return;
+
+    // Y축 우선, X축 차선 오름차순 정렬 (좌상단에서 우하단 방향 배치 파악)
+    cells.sort((a, b) => a.y !== b.y ? a.y - b.y : a.x - b.x);
+
+    if (type === 'O') {
+        // O-Mino (2x2) 스페셜 뚱뚱냥이 매핑
+        cells.forEach((cell, idx) => {
+            const rx = startX + cell.x * size;
+            const ry = startY + cell.y * size;
+            let oType = 'tl';
+            if (idx === 1) oType = 'tr';
+            else if (idx === 2) oType = 'bl';
+            else if (idx === 3) oType = 'br';
+            
+            drawCatCellPart(ctx, rx, ry, size, type, `O_${oType}`, isGhost);
+        });
+    } else {
+        // 그 외 모든 미노 (I, T, S, Z, J, L)
+        // 맨 첫 셀(좌상단)을 꼬리, 맨 마지막 셀(우하단)을 머리로 렌더링하고 나머지는 몸통으로 처리
+        cells.forEach((cell, idx) => {
+            const rx = startX + cell.x * size;
+            const ry = startY + cell.y * size;
+            let part = 'body';
+            
+            if (idx === 0) {
+                part = 'tail';
+            } else if (idx === cells.length - 1) {
+                part = 'head';
+            }
+            
+            drawCatCellPart(ctx, rx, ry, size, type, part, isGhost);
+        });
+    }
+}
+
+// 미노 형상 행렬 그리기 (Hold/Next용 - 1마리 완전한 고양이로 표현)
 function drawPiecePreview(ctx, matrix, type, size = 16) {
     const rows = matrix.length;
     const cols = matrix[0].length;
@@ -928,73 +1106,55 @@ function drawPiecePreview(ctx, matrix, type, size = 16) {
     const offsetX = (80 - cols * size) / 2;
     const offsetY = (80 - rows * size) / 2;
 
-    for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-            if (matrix[y][x]) {
-                drawCatCell(ctx, offsetX + x * size, offsetY + y * size, size, type);
-            }
-        }
-    }
+    drawCoherentCatPiece(ctx, offsetX, offsetY, matrix, type, size, false);
 }
 
-// 메인 보드 그리드 및 가이드라인 그리기
+// 메인 보드 그리드 및 가이드라인 그리기 (다이나믹 스케일 적용)
 function drawGrid(ctx, grid, activePiece) {
-    ctx.fillStyle = '#141124'; // 어두운 밤색 바둑판
-    ctx.fillRect(0, 0, 300, 600);
+    const targetW = BOARD_WIDTH * BLOCK_SIZE;
+    const targetH = BOARD_HEIGHT * BLOCK_SIZE;
 
-    // 격자 가이드 보조선 그리기 (미약하게)
+    ctx.fillStyle = '#141124'; // 밤하늘색 바둑판
+    ctx.fillRect(0, 0, targetW, targetH);
+
+    // 격자 보조선
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
     ctx.lineWidth = 1;
     for (let x = 0; x <= BOARD_WIDTH; x++) {
         ctx.beginPath();
         ctx.moveTo(x * BLOCK_SIZE, 0);
-        ctx.lineTo(x * BLOCK_SIZE, 600);
+        ctx.lineTo(x * BLOCK_SIZE, targetH);
         ctx.stroke();
     }
     for (let y = 0; y <= BOARD_HEIGHT; y++) {
         ctx.beginPath();
         ctx.moveTo(0, y * BLOCK_SIZE);
-        ctx.lineTo(300, y * BLOCK_SIZE);
+        ctx.lineTo(targetW, y * BLOCK_SIZE);
         ctx.stroke();
     }
 
-    // 쌓인 블록 그리기
+    // 1. 바닥에 고정된 자는 고양이 블록들
     for (let y = 0; y < BOARD_HEIGHT; y++) {
         for (let x = 0; x < BOARD_WIDTH; x++) {
             if (grid[y][x]) {
-                drawCatCell(ctx, x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, grid[y][x]);
+                drawCatCellPart(ctx, x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, grid[y][x], 'sleeping');
             }
         }
     }
 
-    // 하강중인 액티브 블록 그리기 (그림자 가이드 포함)
+    // 2. 떨어지고 있는 고양이 미노
     if (activePiece) {
-        // 1. 고스트 피스 (하드 드롭 시 도착할 가이드라인 위치 구하기)
+        // 고스트 피스 위치 도출
         let ghostY = activePiece.y;
         while (!checkCollision(grid, activePiece.matrix, activePiece.x, ghostY + 1)) {
             ghostY++;
         }
         
-        // 고스트 피스 그리기
-        ctx.save();
-        ctx.globalAlpha = 0.25; // 투명하게
-        for (let y = 0; y < activePiece.matrix.length; y++) {
-            for (let x = 0; x < activePiece.matrix[y].length; x++) {
-                if (activePiece.matrix[y][x]) {
-                    drawCatCell(ctx, (activePiece.x + x) * BLOCK_SIZE, (ghostY + y) * BLOCK_SIZE, BLOCK_SIZE, activePiece.type);
-                }
-            }
-        }
-        ctx.restore();
+        // 고스트 고양이 (투명 꼬리+머리 세트)
+        drawCoherentCatPiece(ctx, activePiece.x * BLOCK_SIZE, ghostY * BLOCK_SIZE, activePiece.matrix, activePiece.type, BLOCK_SIZE, true);
 
-        // 2. 실체 블록 그리기
-        for (let y = 0; y < activePiece.matrix.length; y++) {
-            for (let x = 0; x < activePiece.matrix[y].length; x++) {
-                if (activePiece.matrix[y][x]) {
-                    drawCatCell(ctx, (activePiece.x + x) * BLOCK_SIZE, (activePiece.y + y) * BLOCK_SIZE, BLOCK_SIZE, activePiece.type);
-                }
-            }
-        }
+        // 실제 하강 중인 고양이
+        drawCoherentCatPiece(ctx, activePiece.x * BLOCK_SIZE, activePiece.y * BLOCK_SIZE, activePiece.matrix, activePiece.type, BLOCK_SIZE, false);
     }
 }
 
@@ -1080,6 +1240,12 @@ function rotatePiece(activePiece, dir) {
 // --- 9. 사용자 조작 인풋 핸들러 ---
 function handleKeyDown(e) {
     if (!isGameRunning || isGamePaused) return;
+
+    // 게임 조작 키 입력 시 브라우저 스크롤 등의 기본 동작을 방지합니다.
+    const controlKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyC', 'ShiftLeft', 'ShiftRight'];
+    if (controlKeys.includes(e.code)) {
+        e.preventDefault();
+    }
 
     switch(e.code) {
         case 'ArrowLeft':

@@ -793,11 +793,11 @@ body {
 .player-panel {
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 16px;
     border-radius: var(--border-radius-lg);
     background: var(--bg-card);
     width: 100%;
-    max-width: 480px;
+    max-width: 500px;
 }
 
 .player-panel.self {
