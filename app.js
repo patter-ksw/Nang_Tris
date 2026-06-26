@@ -18,19 +18,72 @@ let currentRankingMode = 'single'; // 'single' 또는 'multi'
 let audioCtx = null;
 let isMuted = false;
 let bgmTimer = null;
-let currentNoteIndex = 0;
+let currentBgmStep = 0;
 
-// BGM 멜로디 (Fredoka 테마에 어울리는 귀여운 8비트 풍 음계)
-const bgmNotes = [
-    { f: 523.25, d: 0.5 }, { f: 587.33, d: 0.5 }, { f: 659.25, d: 0.5 }, { f: 698.46, d: 0.5 },
-    { f: 783.99, d: 1.0 }, { f: 783.99, d: 1.0 },
-    { f: 880.00, d: 0.5 }, { f: 880.00, d: 0.5 }, { f: 987.77, d: 0.5 }, { f: 1046.50, d: 0.5 },
-    { f: 783.99, d: 2.0 },
-    { f: 698.46, d: 0.5 }, { f: 698.46, d: 0.5 }, { f: 659.25, d: 0.5 }, { f: 659.25, d: 0.5 },
-    { f: 587.33, d: 1.0 }, { f: 523.25, d: 1.0 },
-    { f: 587.33, d: 0.5 }, { f: 659.25, d: 0.5 }, { f: 587.33, d: 0.5 }, { f: 493.88, d: 0.5 },
-    { f: 523.25, d: 2.0 }
-];
+// 각 스테이지별 8비트 폴리포니 BGM 트랙 정의 (멜로디 + 베이스 조화)
+// 32스텝 루프, 각 스텝은 8분음표 기준
+const STAGE_BGM = {
+    1: { // 1스테이지: 밝고 귀여운 아기 고양이 테마 (C Major)
+        tempo: 135,
+        melody: [
+            523.25, 0, 659.25, 0, 783.99, 0, 880.00, 0,
+            698.46, 0, 880.00, 0, 783.99, 0, 0, 0,
+            783.99, 0, 880.00, 0, 987.77, 0, 1046.50, 0,
+            880.00, 0, 783.99, 0, 523.25, 0, 0, 0
+        ],
+        bass: [
+            130.81, 130.81, 164.81, 164.81, 174.61, 174.61, 196.00, 196.00,
+            174.61, 174.61, 196.00, 196.00, 130.81, 130.81, 130.81, 130.81,
+            196.00, 196.00, 220.00, 220.00, 246.94, 246.94, 261.63, 261.63,
+            220.00, 220.00, 196.00, 196.00, 130.81, 130.81, 130.81, 130.81
+        ]
+    },
+    2: { // 2스테이지: 따뜻하고 재지한 식빵 굽는 고양이 테마 (F Pentatonic)
+        tempo: 110,
+        melody: [
+            349.23, 0, 440.00, 0, 523.25, 523.25, 587.33, 0,
+            523.25, 0, 440.00, 0, 392.00, 0, 349.23, 0,
+            392.00, 0, 440.00, 0, 392.00, 0, 293.66, 0,
+            349.23, 0, 0, 0, 0, 0, 0, 0
+        ],
+        bass: [
+            87.31, 87.31, 87.31, 87.31, 116.54, 116.54, 116.54, 116.54,
+            130.81, 130.81, 130.81, 130.81, 87.31, 87.31, 87.31, 87.31,
+            130.81, 130.81, 130.81, 130.81, 98.00, 98.00, 98.00, 98.00,
+            87.31, 87.31, 87.31, 87.31, 87.31, 87.31, 87.31, 87.31
+        ]
+    },
+    3: { // 3스테이지: 긴장감 넘치는 사냥 나선 고양이 테마 (A Minor)
+        tempo: 155,
+        melody: [
+            440.00, 493.88, 523.25, 0, 587.33, 659.25, 698.46, 0,
+            659.25, 0, 587.33, 0, 523.25, 0, 493.88, 0,
+            440.00, 0, 523.25, 0, 659.25, 0, 783.99, 0,
+            698.46, 0, 587.33, 0, 440.00, 0, 0, 0
+        ],
+        bass: [
+            110.00, 0, 110.00, 0, 146.83, 0, 146.83, 0,
+            164.81, 0, 164.81, 0, 110.00, 0, 110.00, 0,
+            110.00, 0, 130.81, 0, 164.81, 0, 196.00, 0,
+            174.61, 0, 146.83, 0, 110.00, 0, 110.00, 0
+        ]
+    },
+    4: { // 4스테이지: 몽환적이고 스페이시한 우주 고양이 테마 (C Lydian Arpeggio)
+        tempo: 100,
+        melody: [
+            523.25, 659.25, 783.99, 987.77, 1174.66, 987.77, 783.99, 659.25,
+            587.33, 739.99, 880.00, 1108.73, 1318.51, 1108.73, 880.00, 739.99,
+            523.25, 659.25, 783.99, 987.77, 1174.66, 987.77, 783.99, 659.25,
+            587.33, 739.99, 880.00, 1108.73, 1318.51, 0, 0, 0
+        ],
+        bass: [
+            65.41, 65.41, 65.41, 65.41, 65.41, 65.41, 65.41, 65.41,
+            73.42, 73.42, 73.42, 73.42, 73.42, 73.42, 73.42, 73.42,
+            65.41, 65.41, 65.41, 65.41, 65.41, 65.41, 65.41, 65.41,
+            73.42, 73.42, 73.42, 73.42, 73.42, 73.42, 73.42, 73.42
+        ]
+    }
+};
 
 // --- 2. 테트리스 게임 룰 & 데이터 정의 ---
 const BOARD_WIDTH = 10;
@@ -67,7 +120,9 @@ const gameStateSelf = {
     lines: 0,
     level: 1,
     garbageQueue: [], // 상대에게 받은 장애물 대기열
-    attackGauge: 0    // 전송할 공격 게이지
+    attackGauge: 0,   // 전송할 공격 게이지
+    stage: 1,         // 현재 스테이지
+    stageLines: 0     // 현재 스테이지에서 지운 줄 수 (30줄 목표)
 };
 
 // 상대방 게임 상태
@@ -698,36 +753,61 @@ function startBGM() {
         initAudio();
         if (bgmTimer) return;
         
-        const tempo = 135; // BPM
-        const beatDuration = 60 / tempo;
-        
-        function playNextNote() {
-            if (isMuted || !audioCtx) return;
-            const note = bgmNotes[currentNoteIndex];
+        function playNextStep() {
+            if (isMuted || !audioCtx || !isGameRunning || isGamePaused) return;
+            
+            // 스테이지 번호 1~4 범위 매핑
+            const currentStageNum = isMultiplayMode ? 1 : (((gameStateSelf.stage - 1) % 4) + 1);
+            const track = STAGE_BGM[currentStageNum];
+            
+            const stepDuration = 60 / track.tempo / 2; // 8분음표 간격 (초 단위)
             const now = audioCtx.currentTime;
-            const noteDuration = note.d * beatDuration;
             
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
+            // 1. 멜로디 파트 (Triangle Wave, 맑은 고음)
+            const melFreq = track.melody[currentBgmStep];
+            if (melFreq > 0) {
+                const oscMel = audioCtx.createOscillator();
+                const gainMel = audioCtx.createGain();
+                
+                oscMel.type = 'triangle';
+                oscMel.frequency.setValueAtTime(melFreq, now);
+                
+                gainMel.gain.setValueAtTime(0, now);
+                gainMel.gain.linearRampToValueAtTime(0.05, now + 0.01);
+                gainMel.gain.exponentialRampToValueAtTime(0.001, now + stepDuration - 0.02);
+                
+                oscMel.connect(gainMel);
+                gainMel.connect(audioCtx.destination);
+                
+                oscMel.start(now);
+                oscMel.stop(now + stepDuration);
+            }
             
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(note.f, now);
+            // 2. 베이스 파트 (Triangle Wave, 부드러운 저음)
+            const bassFreq = track.bass[currentBgmStep];
+            if (bassFreq > 0) {
+                const oscBass = audioCtx.createOscillator();
+                const gainBass = audioCtx.createGain();
+                
+                oscBass.type = 'triangle';
+                oscBass.frequency.setValueAtTime(bassFreq, now);
+                
+                gainBass.gain.setValueAtTime(0, now);
+                gainBass.gain.linearRampToValueAtTime(0.04, now + 0.02);
+                gainBass.gain.exponentialRampToValueAtTime(0.001, now + stepDuration - 0.02);
+                
+                oscBass.connect(gainBass);
+                gainBass.connect(audioCtx.destination);
+                
+                oscBass.start(now);
+                oscBass.stop(now + stepDuration);
+            }
             
-            gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.04, now + 0.02);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + noteDuration - 0.02);
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            osc.start(now);
-            osc.stop(now + noteDuration);
-            
-            currentNoteIndex = (currentNoteIndex + 1) % bgmNotes.length;
-            bgmTimer = setTimeout(playNextNote, noteDuration * 1000);
+            currentBgmStep = (currentBgmStep + 1) % track.melody.length;
+            bgmTimer = setTimeout(playNextStep, stepDuration * 1000);
         }
         
-        playNextNote();
+        playNextStep();
     } catch (e) {
         console.error("BGM error:", e);
     }
@@ -1378,6 +1458,16 @@ function lockPieceAndNext() {
             
             sendGarbageToOpponent(garbageCount);
         }
+
+        // 싱글플레이어 모드: 스테이지 진행 검사 (30줄 클리어 시 스테이지 클리어)
+        if (!isMultiplayMode) {
+            gameStateSelf.stageLines += lines;
+            if (gameStateSelf.stageLines >= 30) {
+                updateStatsUI();
+                triggerStageClear();
+                return; // 다음 조각 배치를 중단하고 스테이지 클리어 화면으로 이동
+            }
+        }
     }
     
     // UI 스태츠 동기화
@@ -1480,7 +1570,115 @@ async function handleGameOver() {
         await uploadHighScore('single', gameStateSelf.score);
     }
     
+    // overlay-btn-restart 복원
+    const restartBtn = document.getElementById('overlay-btn-restart');
+    restartBtn.innerHTML = `<i data-lucide="rotate-ccw"></i> 다시 시작`;
+    restartBtn.onclick = restartCurrentGame;
+    restartBtn.classList.remove('hidden');
+    lucide.createIcons();
+    
     document.getElementById('game-overlay').classList.remove('hidden');
+}
+
+// 싱글플레이어 스테이지 클리어 연출 및 로직
+function triggerStageClear() {
+    isGameRunning = false;
+    stopBGM();
+    playStageClearFanfare(); // 승리 팡파레 음악 연주
+    
+    const title = document.getElementById('overlay-title');
+    const subtitle = document.getElementById('overlay-subtitle');
+    
+    title.textContent = `STAGE ${gameStateSelf.stage} CLEAR!`;
+    title.style.color = "#ffd166"; // Gold
+    subtitle.textContent = "야옹! 고양이가 너무 기뻐서 공중제비를 돕니다! 🐈💨";
+    
+    document.getElementById('overlay-score').textContent = gameStateSelf.score;
+    document.getElementById('overlay-lines').textContent = gameStateSelf.lines;
+    
+    // 고양이 공중제비 애니메이션 트리거
+    const cat = document.querySelector('.dancing-cat');
+    if (cat) {
+        cat.classList.remove('somersault');
+        void cat.offsetWidth; // Reflow 트리거
+        cat.classList.add('somersault');
+    }
+    
+    // 다음 스테이지 버튼으로 임시 변환
+    const restartBtn = document.getElementById('overlay-btn-restart');
+    restartBtn.innerHTML = `<i data-lucide="arrow-right-circle"></i> 다음 스테이지 시작 (Stage ${gameStateSelf.stage + 1}) 🐾`;
+    restartBtn.onclick = startNextStage;
+    restartBtn.classList.remove('hidden');
+    lucide.createIcons();
+    
+    document.getElementById('game-overlay').classList.remove('hidden');
+}
+
+// 다음 스테이지 시작 처리
+function startNextStage() {
+    document.getElementById('game-overlay').classList.add('hidden');
+    
+    gameStateSelf.stage++;
+    gameStateSelf.stageLines = 0; // 누적 라인 초기화
+    
+    // 보너스 보상: 고양이가 발톱으로 긁어서 맨 아래 3줄을 깎아줍니다!
+    cleanBottomRows(3);
+    
+    // 음악 재생용 스텝 리셋
+    currentBgmStep = 0;
+    
+    // 스테이지별 고정 속도 적용 (스테이지가 높을수록 빨라짐)
+    // Stage 1: 1000ms, Stage 2: 800ms, Stage 3: 650ms, Stage 4: 500ms, Stage 5: 380ms, Stage 6: 280ms, Stage 7: 200ms, Stage 8+: 100ms
+    const speedTable = [1000, 1000, 800, 650, 500, 380, 280, 200, 120, 90];
+    dropInterval = speedTable[gameStateSelf.stage] || 80;
+    
+    // 게임 재개
+    isGameRunning = true;
+    startBGM();
+    
+    lastTime = performance.now();
+    requestAnimationFrame(gameLoop);
+}
+
+// 보드 바닥 줄 청소 보상
+function cleanBottomRows(count) {
+    for (let i = 0; i < count; i++) {
+        gameStateSelf.grid.pop();
+        gameStateSelf.grid.unshift(Array(BOARD_WIDTH).fill(0));
+    }
+    playMeowSound();
+}
+
+// 8비트 승리 팡파레 음악 합성
+function playStageClearFanfare() {
+    if (isMuted) return;
+    try {
+        initAudio();
+        const now = audioCtx.currentTime;
+        
+        // 8비트 풍의 C5 -> E5 -> G5 -> C6 도약 멜로디
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        
+        notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+            
+            gainNode.gain.setValueAtTime(0, now + idx * 0.12);
+            gainNode.gain.linearRampToValueAtTime(0.12, now + idx * 0.12 + 0.03);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.25);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start(now + idx * 0.12);
+            osc.stop(now + idx * 0.12 + 0.25);
+        });
+    } catch (e) {
+        console.error("Fanfare audio error:", e);
+    }
 }
 
 // 싱글 플레이 일시 정지
@@ -1589,6 +1787,8 @@ function resetLocalGameState() {
     gameStateSelf.level = 1;
     gameStateSelf.garbageQueue = [];
     gameStateSelf.attackGauge = 0;
+    gameStateSelf.stage = 1;         // 스테이지 리셋
+    gameStateSelf.stageLines = 0;    // 스테이지 지운 라인 리셋
     
     gameStateSelf.nextPieceQueue = [getRandomPiece(), getRandomPiece(), getRandomPiece()];
     
