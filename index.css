@@ -1453,6 +1453,17 @@ body {
 }
 
 @media screen and (max-width: 1024px) {
+    /* 0. 모바일에서 2인용 모드 요소 감추기 */
+    .play-card.multi {
+        display: none !important;
+    }
+    .rooms-container {
+        display: none !important;
+    }
+    #rank-tab-multi {
+        display: none !important;
+    }
+
     /* 1. 기본 앱 컨테이너 패딩 및 가로 스크롤 완전 차단 */
     #app {
         padding: 8px !important;

@@ -427,6 +427,10 @@ function subscribeRoomsRealtime() {
 
 // 방 만들기 관련 이벤트
 function openCreateRoomModal() {
+    if (window.innerWidth <= 1024) {
+        alert("멀티플레이는 PC 환경에서만 플레이할 수 있습니다 🐱");
+        return;
+    }
     document.getElementById('create-room-modal').classList.remove('hidden');
 }
 
@@ -488,6 +492,10 @@ async function handleCreateRoomSubmit(e) {
 
 // 방 입장 관련 이벤트
 async function joinRoom(roomId, isLocked) {
+    if (window.innerWidth <= 1024) {
+        alert("멀티플레이는 PC 환경에서만 플레이할 수 있습니다 🐱");
+        return;
+    }
     if (isLocked) {
         document.getElementById('join-room-id').value = roomId;
         document.getElementById('join-room-password').value = '';
