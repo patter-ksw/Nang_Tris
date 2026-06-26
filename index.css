@@ -397,11 +397,7 @@ body {
     flex-grow: 1;
 }
 
-@media (max-width: 900px) {
-    .lobby-content {
-        grid-template-columns: 1fr;
-    }
-}
+/* Consolidated into the bottom media query block to avoid overrides */
 
 .lobby-main {
     display: flex;
@@ -416,11 +412,7 @@ body {
     gap: 20px;
 }
 
-@media (max-width: 500px) {
-    .quick-play-grid {
-        grid-template-columns: 1fr;
-    }
-}
+/* Consolidated into the bottom media query block to avoid overrides */
 
 .play-card {
     padding: 30px;
@@ -783,12 +775,7 @@ body {
     justify-content: center;
 }
 
-@media (max-width: 800px) {
-    .game-layout-grid {
-        flex-direction: column;
-        align-items: center;
-    }
-}
+/* Consolidated into the bottom media query block to avoid overrides */
 
 .player-panel {
     display: flex;
@@ -1459,24 +1446,29 @@ body {
     text-shadow: 0 0 15px rgba(248, 113, 113, 0.4);
 }
 
-/* --- 모바일 터치 패드 컨트롤러 디자인 및 모바일 화면 완벽 최적화 (max-width: 900px) --- */
+/* --- 모바일 터치 패드 디자인 및 모바일 화면 완벽 최적화 (max-width: 900px) --- */
 
 .mobile-only-flex {
     display: none !important;
 }
 
 @media (max-width: 900px), (pointer: coarse) {
-    /* 1. 기본 앱 컨테이너 패딩 조절 */
+    /* 1. 기본 앱 컨테이너 패딩 및 가로 스크롤 완전 차단 */
     #app {
-        padding: 10px !important;
+        padding: 8px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
     }
 
     /* 2. 로그인/회원가입 화면 모바일 최적화 (글씨 잘림/밑으로 밀림 방지) */
     .auth-card {
         padding: 24px 16px !important;
         width: 100% !important;
-        max-width: 340px !important;
+        max-width: 320px !important;
         margin: 0 auto !important;
+        box-sizing: border-box !important;
     }
     .logo-emoji {
         font-size: 3rem !important;
