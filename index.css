@@ -1804,9 +1804,14 @@ body {
         margin: 10px auto 0 auto !important;
     }
     .hold-row {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
         gap: 8px !important;
+        width: 100% !important;
     }
     .hold-row .ctrl-btn {
+        flex: 1 !important;
         height: 38px !important;
         font-size: 0.85rem !important;
         border-radius: 10px !important;
@@ -1822,6 +1827,36 @@ body {
     }
     .ctrl-btn {
         font-size: 1.1rem !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(5px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        color: var(--text-primary) !important;
+        font-weight: bold !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: var(--transition-spring) !important;
+        user-select: none !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+        outline: none !important;
+    }
+    .ctrl-btn:active {
+        transform: scale(0.9) !important;
+        background: rgba(255, 138, 180, 0.3) !important;
+        border-color: var(--color-primary) !important;
+    }
+    .ctrl-btn.btn-attack {
+        background: linear-gradient(135deg, #f97316 0%, #ef4444 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4) !important;
+        font-weight: 700 !important;
+        color: white !important;
+    }
+    .ctrl-btn.btn-attack:active {
+        background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%) !important;
+        transform: scale(0.9) !important;
     }
     .dpad-container .ctrl-btn,
     .actions-container .ctrl-btn {

@@ -1603,7 +1603,7 @@ function handleKeyDown(e) {
     if (!isGameRunning || isGamePaused) return;
 
     // 게임 조작 키 입력 시 브라우저 스크롤 등의 기본 동작을 방지합니다.
-    const controlKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyC', 'ShiftLeft', 'ShiftRight'];
+    const controlKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyC', 'ShiftLeft', 'ShiftRight', 'Enter', 'NumpadEnter'];
     if (controlKeys.includes(e.code)) {
         e.preventDefault();
     }
@@ -1639,6 +1639,12 @@ function handleKeyDown(e) {
                 toggleGamePause();
             }
             break;
+        case 'Enter':
+        case 'NumpadEnter':
+            if (isMultiplayMode && gameStateSelf.attackGauge >= 1) {
+                triggerManualAttack();
+            }
+            break;
     }
 }
 
@@ -1670,6 +1676,11 @@ function handleMobileAction(action) {
             break;
         case 'hold':
             holdActivePiece();
+            break;
+        case 'attack':
+            if (isMultiplayMode && gameStateSelf.attackGauge >= 1) {
+                triggerManualAttack();
+            }
             break;
         case 'pause':
             if (!isMultiplayMode) {
@@ -1768,13 +1779,18 @@ function lockPieceAndNext() {
         gameStateSelf.level = Math.floor(gameStateSelf.lines / 10) + 1;
         dropInterval = Math.max(100, 1000 - (gameStateSelf.level - 1) * 100);
 
-        // 멀티플레이어 경쟁전: 장애물 전송 발송 (2줄:1, 3줄:2, 4줄:4)
-        if (isMultiplayMode && lines >= 2) {
-            let garbageCount = 1;
-            if (lines === 3) garbageCount = 2;
-            if (lines === 4) garbageCount = 4;
+        // 멀티플레이어 경쟁전: 어택 게이지 증가 및 공격 처리
+        if (isMultiplayMode && lines > 0) {
+            gameStateSelf.attackGauge += lines;
             
-            sendGarbageToOpponent(garbageCount);
+            // 10개까지 쌓이면 자동으로 상대쪽에 어택 (10줄 공격 후 게이지에서 10 차감)
+            if (gameStateSelf.attackGauge >= 10) {
+                sendGarbageToOpponent(10);
+                gameStateSelf.attackGauge -= 10;
+                playMeowSound(); // 어택 알림음
+            }
+            
+            updateGarbageGauge('self', gameStateSelf.attackGauge);
         }
 
         // 싱글플레이어 모드: 스테이지 진행 검사 (30줄 클리어 시 스테이지 클리어)
@@ -2144,6 +2160,10 @@ function enterGameRoom(room) {
         document.getElementById('player-panel-opponent').classList.remove('hidden');
         document.getElementById('multiplay-controls').classList.remove('hidden');
         
+        // 모바일 가상 패드에 어택 버튼 표시
+        const mobileAttackBtn = document.getElementById('btn-mobile-attack');
+        if (mobileAttackBtn) mobileAttackBtn.classList.remove('hidden');
+        
         if (room.opponent_id) {
             document.getElementById('player-opp-name').textContent = isHost ? room.opponent_nickname : room.creator_nickname;
         } else {
@@ -2164,6 +2184,10 @@ function enterGameRoom(room) {
         document.getElementById('game-mode-badge').textContent = 'SINGLE';
         document.getElementById('player-panel-opponent').classList.add('hidden');
         document.getElementById('multiplay-controls').classList.add('hidden');
+        
+        // 모바일 가상 패드에 어택 버튼 숨김
+        const mobileAttackBtn = document.getElementById('btn-mobile-attack');
+        if (mobileAttackBtn) mobileAttackBtn.classList.add('hidden');
         
         // 싱글 게임 즉시 개시
         initSingleGameStart();
@@ -2430,6 +2454,22 @@ function sendGarbageToOpponent(lines) {
         event: 'garbage-attack',
         payload: { lines: lines }
     });
+}
+
+// 수동 어택 개시 (엔터키 또는 모바일 ATTACK 버튼 클릭)
+function triggerManualAttack() {
+    if (!isMultiplayMode || !isGameRunning || isGamePaused) return;
+    if (gameStateSelf.attackGauge < 1) return;
+    
+    const linesToSend = gameStateSelf.attackGauge;
+    sendGarbageToOpponent(linesToSend);
+    
+    gameStateSelf.attackGauge = 0;
+    updateGarbageGauge('self', 0);
+    syncGameStateToOpponent();
+    
+    // 공격 효과음
+    playMeowSound();
 }
 
 // 사망 노티 발송

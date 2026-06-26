@@ -26,7 +26,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="index.css?v=1.0.9">
+    <link rel="stylesheet" href="index.css?v=1.1.0">
 </head>
 <body>
     <div id="app">
@@ -376,6 +376,7 @@
                 <div id="mobile-controller" class="mobile-only-flex mobile-controls-container">
                     <div class="hold-row">
                         <button type="button" class="ctrl-btn btn-hold" onclick="handleMobileAction('hold')">HOLD</button>
+                        <button type="button" id="btn-mobile-attack" class="ctrl-btn btn-attack hidden" onclick="handleMobileAction('attack')">ATTACK 🐾</button>
                         <button type="button" class="ctrl-btn btn-pause" onclick="handleMobileAction('pause')">PAUSE</button>
                     </div>
                     <div class="control-main-layout">
