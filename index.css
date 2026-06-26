@@ -2015,7 +2015,7 @@ body {
     }
 
     /* 로그인 화면 스크롤 방지 */
-    #auth-section {
+    #auth-section:not(.hidden) {
         height: 100% !important;
         overflow: hidden !important;
         display: flex !important;
@@ -2024,7 +2024,7 @@ body {
     }
 
     /* 로비 화면 높이 고정 및 리스트 유연 스크롤 */
-    #lobby-section {
+    #lobby-section:not(.hidden) {
         height: 100% !important;
         min-height: 0 !important;
         max-height: calc(100vh - 20px) !important;
@@ -2105,7 +2105,7 @@ body {
     }
 
     /* 게임 플레이 화면 높이 및 여백 고정 */
-    #game-section {
+    #game-section:not(.hidden) {
         height: 100% !important;
         max-height: calc(100vh - 20px) !important;
         overflow: hidden !important;
@@ -2122,7 +2122,7 @@ body {
         flex-grow: 1 !important;
         overflow: hidden !important;
     }
-    .player-panel {
+    .player-panel:not(.hidden) {
         height: 100% !important;
         box-sizing: border-box !important;
         display: flex !important;
