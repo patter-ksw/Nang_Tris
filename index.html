@@ -61,17 +61,17 @@
                         </div>
                     </div>
                     
-                    <div class="input-group">
-                        <label for="auth-password"><i data-lucide="lock"></i> 비밀번호</label>
-                        <input type="password" id="auth-password" required placeholder="비밀번호를 입력하세요">
-                    </div>
-
                     <div class="input-group" id="nickname-group" style="display: none;">
                         <label for="auth-nickname"><i data-lucide="smile"></i> 닉네임</label>
                         <div style="display: flex; gap: 8px;">
                             <input type="text" id="auth-nickname" placeholder="게임에서 사용할 닉네임" oninput="resetSignupNicknameCheck()">
                             <button type="button" id="btn-check-signup-nickname" class="btn btn-check-pending" style="display: none; white-space: nowrap; padding: 0 15px;" onclick="checkSignupNickname()">중복확인</button>
                         </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="auth-password"><i data-lucide="lock"></i> 비밀번호</label>
+                        <input type="password" id="auth-password" required placeholder="비밀번호를 입력하세요">
                     </div>
 
                     <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">
