@@ -290,11 +290,30 @@ function showSection(sectionId) {
 // --- 4. 사용자 인증 & 로그인 로직 ---
 let authTabMode = 'login';
 
+let isSignupUsernameChecked = false;
+let checkedSignupUsername = "";
+let isSignupNicknameChecked = false;
+let checkedSignupNickname = "";
+
 function switchAuthTab(mode) {
     authTabMode = mode;
     document.getElementById('tab-login').classList.toggle('active', mode === 'login');
     document.getElementById('tab-register').classList.toggle('active', mode === 'register');
     document.getElementById('nickname-group').style.display = mode === 'register' ? 'flex' : 'none';
+    
+    if (mode === 'register') {
+        document.getElementById('btn-check-signup-username').style.display = 'block';
+        document.getElementById('btn-check-signup-username').className = 'btn btn-check-pending';
+        document.getElementById('btn-check-signup-nickname').style.display = 'block';
+        document.getElementById('btn-check-signup-nickname').className = 'btn btn-check-pending';
+        isSignupUsernameChecked = false;
+        checkedSignupUsername = "";
+        isSignupNicknameChecked = false;
+        checkedSignupNickname = "";
+    } else {
+        document.getElementById('btn-check-signup-username').style.display = 'none';
+        document.getElementById('btn-check-signup-nickname').style.display = 'none';
+    }
     
     const submitBtn = document.getElementById('auth-submit-btn');
     if (mode === 'login') {
@@ -304,6 +323,94 @@ function switchAuthTab(mode) {
     }
     lucide.createIcons();
 }
+
+window.resetSignupUsernameCheck = function() {
+    isSignupUsernameChecked = false;
+    checkedSignupUsername = "";
+    const btn = document.getElementById('btn-check-signup-username');
+    if (btn) btn.className = 'btn btn-check-pending';
+};
+
+window.resetSignupNicknameCheck = function() {
+    isSignupNicknameChecked = false;
+    checkedSignupNickname = "";
+    const btn = document.getElementById('btn-check-signup-nickname');
+    if (btn) btn.className = 'btn btn-check-pending';
+};
+
+window.checkSignupUsername = async function() {
+    if (!supabaseClient) return;
+    const username = document.getElementById('auth-username').value.trim();
+    if (!username) {
+        alert('아이디를 입력해주세요.');
+        return;
+    }
+    
+    try {
+        const { data: existing, error } = await supabaseClient
+            .from('tr_users')
+            .select('id')
+            .eq('username', username)
+            .maybeSingle();
+            
+        if (error) {
+            console.error('Check error:', error);
+            alert('중복 확인 중 오류가 발생했습니다.');
+            return;
+        }
+
+        if (existing) {
+            alert('이미 사용중인 아이디입니다.');
+            window.resetSignupUsernameCheck();
+        } else {
+            alert('사용 가능한 아이디입니다.');
+            isSignupUsernameChecked = true;
+            checkedSignupUsername = username;
+            const btn = document.getElementById('btn-check-signup-username');
+            if (btn) btn.className = 'btn btn-check-done';
+        }
+    } catch (error) {
+        console.error('Check error:', error);
+        alert('오류가 발생했습니다.');
+    }
+};
+
+window.checkSignupNickname = async function() {
+    if (!supabaseClient) return;
+    const nickname = document.getElementById('auth-nickname').value.trim();
+    if (!nickname) {
+        alert('닉네임을 입력해주세요.');
+        return;
+    }
+    
+    try {
+        const { data: existing, error } = await supabaseClient
+            .from('tr_users')
+            .select('id')
+            .eq('nickname', nickname)
+            .maybeSingle();
+            
+        if (error) {
+            console.error('Check error:', error);
+            alert('중복 확인 중 오류가 발생했습니다.');
+            return;
+        }
+
+        if (existing) {
+            alert('이미 사용중인 닉네임입니다.');
+            window.resetSignupNicknameCheck();
+        } else {
+            alert('사용 가능한 닉네임입니다.');
+            isSignupNicknameChecked = true;
+            checkedSignupNickname = nickname;
+            const btn = document.getElementById('btn-check-signup-nickname');
+            if (btn) btn.className = 'btn btn-check-done';
+        }
+    } catch (error) {
+        console.error('Check error:', error);
+        alert('오류가 발생했습니다.');
+    }
+};
 
 async function handleAuthSubmit(e) {
     e.preventDefault();
@@ -340,15 +447,13 @@ async function handleAuthSubmit(e) {
                 return;
             }
 
-            // 아이디 중복 확인
-            const { data: existing } = await supabaseClient
-                .from('tr_users')
-                .select('id')
-                .eq('username', username)
-                .maybeSingle();
+            if (!isSignupUsernameChecked || checkedSignupUsername !== username) {
+                alert("먼저 아이디 중복 확인을 해주세요.");
+                return;
+            }
 
-            if (existing) {
-                alert("이미 사용중인 아이디입니다.");
+            if (!isSignupNicknameChecked || checkedSignupNickname !== nickname) {
+                alert("먼저 닉네임 중복 확인을 해주세요.");
                 return;
             }
 

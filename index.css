@@ -151,6 +151,25 @@ body {
     transform: scale(0.92);
 }
 
+.btn-check-pending {
+    background: rgba(255, 126, 103, 0.15);
+    color: var(--primary-color);
+    border: 1px solid rgba(255, 126, 103, 0.4);
+}
+.btn-check-pending:hover {
+    background: rgba(255, 126, 103, 0.25);
+    transform: translateY(-2px);
+}
+
+.btn-check-done {
+    background: #4b5563;
+    color: #9ca3af;
+    border: 1px solid #374151;
+    box-shadow: none !important;
+    transform: none !important;
+    cursor: default;
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--color-primary) 0%, #ff6b87 100%);
     color: white;
